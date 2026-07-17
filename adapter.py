@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
-NOC地址 = "http://localhost:8001"     # 真实场景改成 内网地址（不写进代码库）
+NOC地址 = "http://localhost:8001"     # 真实场景通过配置注入生产 NOC 地址，不写进代码库
 
 
 @app.get("/api/kpi")
