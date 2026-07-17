@@ -1,85 +1,116 @@
-# FastAPI：这个项目里用到的每一个知识点
+# FastAPI 基础
 
-> 约定：只记本仓库真实出现过的用法，每条都指到代码位置。
+**范围说明**：本文只涵盖本仓库 v0.1 代码（`noc_backend.py`、`adapter.py`）实际使用到的 FastAPI 特性。每节先给出定义，再对照仓库中的代码进行说明。未使用的特性统一列于第 7 节，待项目用到时补充。
 
-## 1. FastAPI 是什么
+## 1. 概述
 
-一个 Python Web 框架，把「收到 HTTP 请求 → 调用你的函数 → 把返回值变成 JSON 发回去」这整件事包掉。本项目两个后端（`noc_backend.py`、`adapter.py`）都是它写的。
+FastAPI 是基于 Python 类型注解的 Web 框架，核心职责有三项：
 
-## 2. 三行就是一个服务
+1. **路由分发**：将 URL 路径映射到处理函数；
+2. **请求解析与校验**：从请求中提取参数并验证格式；
+3. **响应序列化**：将函数返回值转换为 HTTP 响应。
+
+本项目的两个后端服务均由 FastAPI 实现：
+
+| 文件 | 职责 | 端口 |
+|------|------|------|
+| `noc_backend.py` | 模拟 NOC 系统，提供原始数据接口 | 8001 |
+| `adapter.py` | 适配层：聚合数据、托管前端页面 | 8002 |
+
+## 2. 应用对象与路由注册
+
+### 2.1 创建应用对象
 
 ```python
 from fastapi import FastAPI
-app = FastAPI()                      # 创建应用对象
-
-@app.get("/api/statistics/all")      # 把「GET 这个路径」绑定到下面的函数
-def statistics_all():
-    return {"code": 0, "data": ...}  # 返回 dict，FastAPI 自动转成 JSON
+app = FastAPI()
 ```
 
-出处：`noc_backend.py`。三个要点：
+`FastAPI()` 实例是服务的核心对象，后续所有路由均注册在该对象上。
 
-- `@app.get("/路径")` 是装饰器：请求路径和处理函数的"绑定登记"
-- 函数**直接返回 dict**，FastAPI 自动序列化成 JSON、自动加 `Content-Type: application/json`
-- 一个 `app` 上可以登记任意多个路径
+### 2.2 使用装饰器注册路由
 
-## 3. uvicorn 是什么，启动命令为什么长那样
+`noc_backend.py` 第 25–28 行：
 
-FastAPI 只定义「怎么处理请求」，**不负责监听端口**。真正开门迎客的是 uvicorn（一个 ASGI 服务器）。
+```python
+@app.get("/api/statistics/all")
+def statistics_all():
+    return {"code": 0, "message": "success", "data": 数据库里的行}
+```
+
+`@app.get(path)` 是装饰器，作用是将「HTTP GET 方法 + 指定路径」的请求绑定到其下方的函数。除 `get` 外，还有 `post`、`put`、`delete` 等方法，分别对应同名的 HTTP 方法。一个应用对象上可注册任意数量的路由。
+
+### 2.3 响应的自动序列化
+
+路由函数可以直接返回 `dict`。FastAPI 会自动完成两件事：
+
+1. 将 `dict` 序列化为 JSON 字符串（无需手动调用 `json.dumps`）；
+2. 设置响应头 `Content-Type: application/json`。
+
+## 3. 运行方式：uvicorn 与 ASGI
+
+FastAPI 本身不包含网络服务器，只定义请求的处理逻辑。监听端口、接收连接、并发调度由 ASGI 服务器完成；本项目使用 uvicorn。
+
+启动命令及其构成：
 
 ```bash
 python3 -m uvicorn noc_backend:app --port 8001
-#                  ^^^^^^^^^^^ ^^^        ^^^^
-#                  模块名(文件名) 变量名     监听端口
 ```
 
-读法：「去 `noc_backend.py` 里找那个叫 `app` 的对象，架在 8001 端口上」。
-类比：FastAPI 是厨师（做菜），uvicorn 是前台+服务员（迎客、传菜）。
+| 片段 | 含义 |
+|------|------|
+| `python3 -m uvicorn` | 以模块方式运行 uvicorn |
+| `noc_backend` | 模块名，即文件 `noc_backend.py` |
+| `app` | 该模块中 FastAPI 实例的变量名 |
+| `--port 8001` | 监听端口 |
 
-## 4. 客户端和服务端可以是同一个程序
+两者的分工：**uvicorn 负责网络层**（监听端口、接收请求、并发调度），**FastAPI 负责应用层**（路由分发、参数校验、响应序列化）。
 
-`adapter.py` 同时扮演两个角色：
+## 4. 同一程序中的服务端与客户端角色
 
-- 对浏览器它是**服务端**：`@app.get("/api/kpi")` 收请求
-- 对 NOC 后端它是**客户端**：`requests.get(...)` 发请求（`adapter.py` 第 27 行）
+`adapter.py` 在通信中同时处于两种角色：
 
-`requests.get` 和 `@app.get` 名字像，方向相反：一个主动出去要数据，一个等着别人来要数据。
+- **服务端**：通过 `@app.get("/api/kpi")` 接收来自浏览器的请求（`adapter.py` 第 24 行）；
+- **客户端**：通过 `requests.get()` 向 NOC 后端发起请求（`adapter.py` 第 27 行）。
 
-## 5. 静态文件托管，以及一个顺序陷阱
+`requests` 是 HTTP 客户端库，用于主动发起请求；FastAPI 是服务端框架，用于接收并处理请求。二者方向相反，在同一程序中并存互不冲突。
 
-`adapter.py` 最后一行：
+## 5. 静态文件托管与路由匹配顺序
+
+`adapter.py` 第 42 行：
 
 ```python
-app.mount("/", StaticFiles(directory=..., html=True))
+app.mount("/", StaticFiles(directory=str(Path(__file__).parent), html=True))
 ```
 
-把整个目录挂到根路径，浏览器访问 `http://localhost:8002/` 时送出 `index.html`。
+作用：将指定目录挂载到根路径 `/`，使其中的文件可通过 HTTP 直接访问。参数 `html=True` 表示访问目录路径时返回该目录下的 `index.html`。
 
-**陷阱**：这行必须写在所有 `@app.get` 路由**之后**。FastAPI 按登记顺序匹配路径，`mount("/")` 会兜住所有请求——如果放在最前面，`/api/kpi` 也会被它拦下变成 404。
+**注意事项**：FastAPI 按注册顺序匹配请求路径。`mount("/")` 会匹配所有未被更早规则处理的路径，因此该语句必须置于全部 API 路由注册**之后**。若将其置于 `@app.get("/api/kpi")` 之前，对 `/api/kpi` 的请求将被静态文件处理器先行拦截，因目录中不存在名为 `api/kpi` 的文件而返回 404。
 
-## 6. 白送的功能：自动接口文档
+## 6. 自动接口文档
 
-服务跑着的时候，浏览器打开：
+FastAPI 根据已注册的路由自动生成 OpenAPI 规范，并内置两个文档页面，服务运行期间可直接访问：
 
-```
-http://localhost:8001/docs
-```
+| 地址 | 说明 |
+|------|------|
+| `http://localhost:8001/docs` | Swagger UI，支持在页面内直接调用接口 |
+| `http://localhost:8001/redoc` | ReDoc，适合阅读 |
 
-会看到 Swagger UI——所有接口自动列出，还能点 "Try it out" 直接调。这不是我们写的，是 FastAPI 从路由定义自动生成的。对接前后端时把这个页面甩给对方，比口头说接口格式靠谱。
+接口文档与代码同源：路由变更后文档自动更新，无需手工维护。前后端联调时，该页面可作为接口契约的权威参考。
 
-## 7. 本项目还没用到、下一步会遇到的
+## 7. 本项目尚未使用的特性
 
-- POST 请求体 + Pydantic 参数校验 —— v0.3 接真实数据源、带鉴权参数时会用到
-- 异常处理 —— 真实 NOC 接口会超时、会返回非 0 的 code，适配层得兜住
+以下特性计划在后续版本用到时补充到本文：
 
-用到那天再回来补，不提前学。
+- POST 请求体与 Pydantic 模型校验 —— 计划于 v0.3（对接真实数据源，涉及鉴权参数）；
+- 异常处理与超时控制 —— 计划于 v0.3（真实接口存在超时与非零返回码的情况）。
 
 ---
 
-## 自测三问
+## 自测
 
-1. 把 `noc_backend.py` 里的 `@app.get` 改成 `@app.post`，浏览器直接访问那个地址会发生什么？为什么？
-2. `requests.get` 和 `@app.get` 的区别是什么？各自站在通信的哪一端？
-3. 把 `app.mount("/", ...)` 挪到 `@app.get("/api/kpi")` 前面，大屏页面和接口各自会怎样？
+1. 将 `noc_backend.py` 中的 `@app.get` 改为 `@app.post` 后，用浏览器直接访问该地址，会得到什么结果？原因是什么？
+2. `requests.get` 与 `@app.get` 分别工作在通信的哪一端？各自的职责是什么？
+3. 将 `app.mount("/", ...)` 移到 `@app.get("/api/kpi")` 之前，前端页面与 KPI 接口分别会出现什么现象？
 
-（答不上来就去改代码试一次——试完记得 `git checkout -- 文件名` 恢复。）
+建议实际修改代码验证，验证后执行 `git checkout -- <文件名>` 恢复。

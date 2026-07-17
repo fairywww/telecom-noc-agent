@@ -16,8 +16,8 @@
 - [x] 路由与 GET 请求 → [fastapi.md](fastapi.md)
 - [x] 返回 dict 自动转 JSON → [fastapi.md](fastapi.md)
 - [x] uvicorn 与启动命令 → [fastapi.md](fastapi.md)
-- [x] 静态文件托管与 mount 顺序陷阱 → [fastapi.md](fastapi.md)
-- [x] Swagger 自动接口文档（/docs） → [fastapi.md](fastapi.md)
+- [x] 静态文件托管与路由匹配顺序 → [fastapi.md](fastapi.md)
+- [x] 自动接口文档（/docs、/redoc） → [fastapi.md](fastapi.md)
 - [ ] POST 请求体与 Pydantic 参数校验（v0.3 接真数据时）
 - [ ] 异常处理与超时兜底（v0.3 接真数据时）
 
