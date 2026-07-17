@@ -2,36 +2,159 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>从零教程 · 最小大屏</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>云网智能运维监控大屏</title>
 <style>
-  body{background:#040E1E;color:#D8ECFA;font-family:sans-serif;
-       display:flex;justify-content:center;align-items:center;height:100vh;gap:60px}
-  .kpi{text-align:center}
-  .kpi b{display:block;font-size:64px;color:#00E5FF}
-  .kpi span{color:#7FA6C6}
+/* ---------- 主题变量（色彩统一在此定义） ---------- */
+:root{
+  --bg:#040E1E; --bg2:#03192E;
+  --panel:#081A30; --panel2:#0A2038;
+  --line:rgba(0,229,255,.22); --line2:rgba(61,139,255,.18);
+  --cyan:#00E5FF; --blue:#3D8BFF; --brand:#0085D0;
+  --txt:#D8ECFA; --sub:#7FA6C6; --dim:#4A6E92;
+  --crit:#FF4D5E; --major:#FF9F40; --urgent:#FFD666; --ok:#2EE6A6;
+  --num-font:"DIN Alternate","Bahnschrift","Helvetica Neue",Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#02060F}
+body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--txt);font-size:14px}
+
+/* ---------- 舞台：固定 1920x1080 设计稿，JS 按窗口等比缩放 ---------- */
+#stage{
+  width:1920px;height:1080px;position:absolute;left:50%;top:50%;
+  transform-origin:center center;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(0,133,208,.18), transparent 60%),
+    radial-gradient(900px 600px at 50% 115%, rgba(0,229,255,.08), transparent 60%),
+    linear-gradient(180deg,#051226 0%, var(--bg) 45%, #030B18 100%);
+  display:flex;flex-direction:column;
+}
+#stage::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,229,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.03) 1px,transparent 1px);
+  background-size:48px 48px;}
+
+/* ---------- 顶栏 ---------- */
+header{height:86px;position:relative;flex:none;display:flex;align-items:center;justify-content:center;z-index:5}
+header::after{content:"";position:absolute;left:2%;right:2%;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,.55) 20%,rgba(0,229,255,.9) 50%,rgba(0,229,255,.55) 80%,transparent)}
+h1{font-size:32px;letter-spacing:6px;font-weight:600;
+  background:linear-gradient(180deg,#FFFFFF 20%,#8FE9FF 60%,#38B6FF);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 24px rgba(0,180,255,.35)}
+.h-side{position:absolute;top:0;height:84px;display:flex;align-items:center;gap:26px}
+.h-side.l{left:28px}.h-side.r{right:28px}
+.h-clock{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:26px;color:#BFEFFF;letter-spacing:1px}
+.h-date{font-size:12px;color:var(--sub);letter-spacing:2px;text-align:right}
+
+/* ---------- 三栏布局 ---------- */
+main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:relative;z-index:2}
+.col{display:flex;flex-direction:column;gap:14px;min-height:0}
+.col.l{width:452px;flex:none}
+.col.c{flex:1;min-width:0}
+.col.r{width:512px;flex:none}
+
+/* ---------- 面板外框（四角高亮 + 扫光标题栏） ---------- */
+.panel{background:linear-gradient(180deg,rgba(10,32,56,.92),rgba(6,20,38,.92));
+  border:1px solid var(--line2);position:relative;display:flex;flex-direction:column;min-height:0;
+  box-shadow:inset 0 0 30px rgba(0,90,160,.12)}
+.panel::before,.panel::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:2px solid var(--cyan);border-top:2px solid var(--cyan)}
+.panel::after{right:-1px;bottom:-1px;border-right:2px solid var(--cyan);border-bottom:2px solid var(--cyan)}
+.p-hd{flex:none;height:38px;display:flex;align-items:center;gap:10px;padding:0 12px;
+  background:linear-gradient(90deg,rgba(0,133,208,.28),rgba(0,133,208,.04) 70%);
+  border-bottom:1px solid var(--line2)}
+.p-hd .tick{width:5px;height:16px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transform:skewX(-14deg)}
+.p-hd b{font-size:16px;letter-spacing:2px;font-weight:600;color:#EAF7FF;white-space:nowrap;flex:none}
+.p-hd .en{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:3px}
+.p-bd{flex:1;min-height:0;padding:10px 12px;position:relative;overflow:hidden}
+
+/* ---------- KPI 网格 ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;height:100%}
+.kpi{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(13,42,72,.6),rgba(8,26,48,.3));
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
+.kpi b{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:34px;line-height:1.15;font-weight:600;color:#DFF6FF;text-shadow:0 0 16px rgba(0,229,255,.45)}
+.kpi span{font-size:11.5px;color:var(--sub)}
+.kpi.hot b{color:var(--urgent);text-shadow:0 0 16px rgba(255,214,102,.4)}
+
+/* ---------- 未接入面板的占位 ---------- */
+.placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim)}
+.placeholder b{font-size:13px;letter-spacing:3px;font-weight:400}
+.placeholder span{font-size:11px;letter-spacing:1px;border:1px solid var(--line2);padding:2px 10px}
 </style>
 </head>
 <body>
 
-<!-- 页面骨架：两个空槽位，等着数字来填 -->
-<div class="kpi"><b id="总数">--</b><span>全网退服总数</span></div>
-<div class="kpi"><b id="地市数">--</b><span>覆盖地市</span></div>
+<div id="stage">
+  <header>
+    <div class="h-side l"><div class="h-clock" id="时钟">--:--:--</div></div>
+    <h1>云网智能运维监控大屏</h1>
+    <div class="h-side r"><div class="h-date" id="日期">----</div></div>
+  </header>
+
+  <main>
+    <!-- 左栏 -->
+    <div class="col l">
+      <section class="panel" style="height:220px">
+        <div class="p-hd"><i class="tick"></i><b>网络运行总览</b><span class="en">NETWORK OVERVIEW</span></div>
+        <div class="p-bd">
+          <div class="kpi-grid">
+            <div class="kpi"><b id="总数">--</b><span>全网退服总数</span></div>
+            <div class="kpi"><b id="地市数">--</b><span>覆盖地市</span></div>
+            <!-- v0.2 任务：告警总数。链路接通后把 -- 换成真数据 -->
+            <div class="kpi hot"><b id="告警数">--</b><span>告警总数</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="panel" style="flex:1">
+        <div class="p-hd"><i class="tick"></i><b>故障等级分布</b><span class="en">FAULT LEVELS</span></div>
+        <div class="p-bd"><div class="placeholder"><b>待 接 入</b><span>ROADMAP v0.2+</span></div></div>
+      </section>
+    </div>
+
+    <!-- 中栏 -->
+    <div class="col c">
+      <section class="panel" style="flex:1">
+        <div class="p-hd"><i class="tick"></i><b>地市退服分布</b><span class="en">CITY OUTAGE</span></div>
+        <div class="p-bd"><div class="placeholder"><b>待 接 入</b><span>ROADMAP v0.2+</span></div></div>
+      </section>
+    </div>
+
+    <!-- 右栏 -->
+    <div class="col r">
+      <section class="panel" style="flex:1">
+        <div class="p-hd"><i class="tick"></i><b>实时告警</b><span class="en">LIVE ALARMS</span></div>
+        <div class="p-bd"><div class="placeholder"><b>待 接 入</b><span>ROADMAP v0.2+</span></div></div>
+      </section>
+    </div>
+  </main>
+</div>
 
 <script>
-async function 取数并展示(){
-  // 第1步 取数：向自己的后端要数据（一行）
-  const 应答 = await fetch("/api/kpi");
-
-  // 第2步 解析：JSON文本 → JS对象（一行）
-  const 数据 = await 应答.json();      // 此刻 数据.outage_total === 153
-
-  // 第3步 展示：按字段名取值，塞进页面元素（各一行）
-  document.getElementById("总数").textContent   = 数据.outage_total;
-  document.getElementById("地市数").textContent = 数据.city_count;
+/* ---- 舞台缩放：按窗口大小等比缩放 1920x1080 设计稿 ---- */
+function 适配舞台(){
+  const 比例 = Math.min(innerWidth/1920, innerHeight/1080);
+  document.getElementById("stage").style.transform = `translate(-50%,-50%) scale(${比例.toFixed(4)})`;
 }
 
-取数并展示();                       // 页面打开就执行
-setInterval(取数并展示, 5000);      // 每5秒再取一次 → 数据"活"了
+/* ---- 顶栏时钟 ---- */
+function 走时(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  document.getElementById("时钟").textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  document.getElementById("日期").textContent =
+    `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} 星期${"日一二三四五六"[d.getDay()]}`;
+}
+
+/* ---- 取数并展示：与 v0.1 完全相同的三步（取数 → 解析 → 填入） ---- */
+async function 取数并展示(){
+  const 应答 = await fetch("/api/kpi");
+  const 数据 = await 应答.json();
+  document.getElementById("总数").textContent   = 数据.outage_total;
+  document.getElementById("地市数").textContent = 数据.city_count;
+  /* v0.2 任务：告警总数接通后，仿照上面两行在此填入 */
+}
+
+适配舞台(); addEventListener("resize", 适配舞台);
+走时(); setInterval(走时, 1000);
+取数并展示(); setInterval(取数并展示, 5000);
 </script>
 </body>
 </html>
