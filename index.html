@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>从零教程 · 最小大屏</title>
+<style>
+  body{background:#040E1E;color:#D8ECFA;font-family:sans-serif;
+       display:flex;justify-content:center;align-items:center;height:100vh;gap:60px}
+  .kpi{text-align:center}
+  .kpi b{display:block;font-size:64px;color:#00E5FF}
+  .kpi span{color:#7FA6C6}
+</style>
+</head>
+<body>
+
+<!-- 页面骨架：两个空槽位，等着数字来填 -->
+<div class="kpi"><b id="总数">--</b><span>全网退服总数</span></div>
+<div class="kpi"><b id="地市数">--</b><span>覆盖地市</span></div>
+
+<script>
+async function 取数并展示(){
+  // 第1步 取数：向自己的后端要数据（一行）
+  const 应答 = await fetch("/api/kpi");
+
+  // 第2步 解析：JSON文本 → JS对象（一行）
+  const 数据 = await 应答.json();      // 此刻 数据.outage_total === 153
+
+  // 第3步 展示：按字段名取值，塞进页面元素（各一行）
+  document.getElementById("总数").textContent   = 数据.outage_total;
+  document.getElementById("地市数").textContent = 数据.city_count;
+}
+
+取数并展示();                       // 页面打开就执行
+setInterval(取数并展示, 5000);      // 每5秒再取一次 → 数据"活"了
+</script>
+</body>
+</html>
