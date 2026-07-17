@@ -48,6 +48,12 @@ python3 -m uvicorn adapter:app --port 8002
 - [ ] **v0.6 RAG 通信知识库** — 网络规范/故障案例向量化，Agent 诊断时引用依据
 - [ ] **v0.7 工程化** — Docker 一键启动、测试、日志、评测（成功率/耗时/Token）
 
+## 学习笔记
+
+[notes/](notes/) 沉淀构建过程中搞懂的知识——只记本项目真实用到的，每条都指到代码位置：
+
+- [FastAPI](notes/fastapi.md) — 路由、uvicorn、静态托管、自动文档，以及一个 mount 顺序陷阱
+
 ## 技术栈
 
 当前：Python · FastAPI · 原生 HTML/JS
