@@ -29,6 +29,6 @@
 
 - [ ] logging 日志
 - [x] 配置管理（代码与配置分离、环境变量注入） → [engineering.md](engineering.md)
-- [x] Docker 与 docker-compose 一键启动 → [engineering.md](engineering.md)
+- [x] Docker 与 docker-compose 一键启动（详解版，含待完成的实践清单） → [docker.md](docker.md)
 - [x] pytest 自动化测试（TestClient、monkeypatch、纯函数优先） → [engineering.md](engineering.md)
 - [ ] Linux 部署基础

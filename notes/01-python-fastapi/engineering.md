@@ -23,7 +23,7 @@
 
 同一份代码，三个环境，零修改——这是十二要素应用（12-Factor App）的核心原则之一。
 
-## 3. Docker 与 compose
+## 3. Docker 与 compose（概要，详解见 [docker.md](docker.md)）
 
 - `Dockerfile` 是镜像配方：基础系统（`python:3.11-slim`）→ 装依赖 → 拷代码 → 启动命令。**先拷 `requirements.txt` 单独安装再拷代码**：改代码不触发依赖层重建，构建缓存生效；
 - `docker-compose.yml` 编排两个服务共用一个镜像，仅启动命令不同；**容器间用服务名互访**（`noc-backend`），不是 `localhost`——每个容器是一台独立"小机器"；
