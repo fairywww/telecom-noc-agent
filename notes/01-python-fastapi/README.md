@@ -9,7 +9,8 @@
 - [ ] 虚拟环境与 pip（venv / conda，requirements.txt 的作用）
 - [ ] 项目结构组织（代码、配置、文档怎么摆）
 - [ ] 类与异常处理
-- [ ] JSON 的读写与解析
+- [x] JSON 的读写与解析 → [data-pipeline.md](data-pipeline.md)
+- [x] 函数抽取与复用（DRY）、生成器表达式 → [data-pipeline.md](data-pipeline.md)
 
 ### FastAPI
 
@@ -18,6 +19,7 @@
 - [x] uvicorn 与启动命令 → [fastapi.md](fastapi.md)
 - [x] 静态文件托管与路由匹配顺序 → [fastapi.md](fastapi.md)
 - [x] 自动接口文档（/docs、/redoc） → [fastapi.md](fastapi.md)
+- [x] 前后端接口契约与向后兼容 → [data-pipeline.md](data-pipeline.md)
 - [ ] POST 请求体与 Pydantic 参数校验（v0.3 接真数据时）
 - [ ] 异常处理与超时兜底（v0.3 接真数据时）
 

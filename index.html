@@ -149,7 +149,7 @@ async function 取数并展示(){
   const 数据 = await 应答.json();
   document.getElementById("总数").textContent   = 数据.outage_total;
   document.getElementById("地市数").textContent = 数据.city_count;
-  /* v0.2 任务：告警总数接通后，仿照上面两行在此填入 */
+  document.getElementById("告警数").textContent = 数据.alarm_total;
 }
 
 适配舞台(); addEventListener("resize", 适配舞台);

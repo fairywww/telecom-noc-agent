@@ -21,21 +21,33 @@ app = FastAPI()
 NOC地址 = "http://localhost:8001"     # 真实场景通过配置注入生产 NOC 地址，不写进代码库
 
 
+def 全网汇总(行, 字段名):
+    """把各地市各专业的某个数字字段全网加总。
+
+    退服、告警乃至以后新增的任何指标，加总逻辑完全相同，
+    抽成函数后新增指标只需增加一次调用，不复制循环代码。
+    """
+    return sum(
+        专业数据[字段名]
+        for 各专业 in 行.values()          # 遍历每个地市
+        for 专业数据 in 各专业.values()     # 遍历 4G/5G
+    )
+
+
 @app.get("/api/kpi")
 def kpi():
     # ① 取数：向 NOC 后端发 HTTP 请求，拿回 JSON
     应答 = requests.get(f"{NOC地址}/api/statistics/all", timeout=5).json()
 
-    # ② 加工：拆开 {"code":0,"data":...} 信封，把各地市各专业的数字加总
+    # ② 加工：拆开 {"code":0,"data":...} 信封，逐项指标加总
     行 = 应答["data"]
-    总退服数 = sum(
-        专业数据["outage_count"]
-        for 各专业 in 行.values()          # 遍历每个地市
-        for 专业数据 in 各专业.values()     # 遍历 4G/5G
-    )
 
     # ③ 应答：用前端约定好的字段名（这就是"契约"）
-    return {"outage_total": 总退服数, "city_count": len(行)}
+    return {
+        "outage_total": 全网汇总(行, "outage_count"),
+        "alarm_total": 全网汇总(行, "alarm_count"),
+        "city_count": len(行),
+    }
 
 
 # 顺手托管前端页面（访问 http://localhost:8002/ 就能打开 index.html）

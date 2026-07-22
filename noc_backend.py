@@ -16,9 +16,9 @@ app = FastAPI()
 
 # 假装这是数据库里查出来的行（真实 NOC 里这些来自 PostgreSQL）
 数据库里的行 = {
-    "南京": {"4G": {"outage_count": 40}, "5G": {"outage_count": 24}},
-    "苏州": {"4G": {"outage_count": 35}, "5G": {"outage_count": 23}},
-    "无锡": {"4G": {"outage_count": 19}, "5G": {"outage_count": 12}},
+    "南京": {"4G": {"outage_count": 40, "alarm_count": 120}, "5G": {"outage_count": 24, "alarm_count": 86}},
+    "苏州": {"4G": {"outage_count": 35, "alarm_count": 95}, "5G": {"outage_count": 23, "alarm_count": 71}},
+    "无锡": {"4G": {"outage_count": 19, "alarm_count": 63}, "5G": {"outage_count": 12, "alarm_count": 42}},
 }
 
 
