@@ -27,16 +27,32 @@ noc_backend.py          adapter.py              index.html
 ## 快速开始
 
 ```bash
+# ① 克隆并创建隔离的 Python 环境
+git clone https://github.com/fairywww/telecom-noc-agent.git
+cd telecom-noc-agent
+python3 -m venv .venv && source .venv/bin/activate
+
+# ② 安装依赖（版本已锁定）
 pip install -r requirements.txt
 
-# 终端 1：启动模拟 NOC 后端
-python3 -m uvicorn noc_backend:app --port 8001
+# ③ 配置大模型密钥（ModelScope 免费额度即可，https://modelscope.cn 获取）
+cp .env.example .env    # 编辑 .env，填入你的 LLM_API_KEY
 
-# 终端 2：启动大屏后端（适配层 + 静态页面托管）
-python3 -m uvicorn adapter:app --port 8002
+# ④ 启动两个服务（各占一个终端）
+python3 -m uvicorn noc_backend:app --port 8001   # 模拟 NOC 数据源
+python3 -m uvicorn adapter:app --port 8002       # 大屏后端 + Agent 接口
 ```
 
-浏览器打开 http://localhost:8002/ ，看到"全网退服总数 153 / 覆盖地市 3"即跑通。
+浏览器打开 http://localhost:8002/ ：左侧 KPI 与地市分布展示实时数据，右侧"智能诊断"面板可直接向 Agent 提问（如"哪个地市最需要关注？"）。
+
+命令行方式使用 Agent 与知识检索：
+
+```bash
+python3 agent.py "南京退服全网最多，按规范该怎么处置？"
+python3 rag.py "告警分几个等级？"
+```
+
+不配置密钥时，大屏数据展示（①②④）不受影响；仅 Agent 诊断功能需要 LLM。
 
 ## Roadmap
 
