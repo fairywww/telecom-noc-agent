@@ -43,7 +43,7 @@ python3 -m uvicorn adapter:app --port 8002
 - [x] **v0.1 最小数据链路** — 三文件跑通 模拟NOC → 适配层 → 大屏
 - [x] **v0.2 多面板大屏** — KPI、地市分布两面板接通真链路（故障等级、实时告警面板转入 backlog）
 - [x] **v0.3 LLM 接入** — OpenAI 兼容格式调通 Qwen，system prompt 管理，密钥经 .env 注入
-- [ ] **v0.4 手写 Agent 循环** — 不用框架，手写 LLM 工具调用循环：查指标 → 分析 → 结论
+- [x] **v0.4 手写 Agent 循环** — 不用框架的工具调用循环：模型自主决定调 /api/kpi 或 /api/city-outage，基于真数据给诊断
 - [ ] **v0.5 故障诊断 Agent** — Agent 自动完成「查数据 → 定位异常 → 生成诊断报告」
 - [ ] **v0.6 RAG 通信知识库** — 网络规范/故障案例向量化，Agent 诊断时引用依据
 - [ ] **v0.7 工程化** — Docker 一键启动、测试、日志、评测（成功率/耗时/Token）

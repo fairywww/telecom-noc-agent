@@ -8,11 +8,11 @@
 
 ### 手写 Agent 循环（核心）
 
-- [ ] Agent 循环骨架：LLM 推理 → 决定调工具 → 执行 → 结果回填 → 再推理，直到给出答案
-- [ ] Tool 定义：名称 / 描述 / 参数 schema，LLM 靠什么选工具
-- [ ] tool calling 的完整消息结构（assistant 的 tool_calls、tool 角色消息）
-- [ ] 循环终止条件与最大轮数保护
-- [ ] State：对话历史与中间结果怎么存
+- [x] Agent 循环骨架：LLM 推理 → 决定调工具 → 执行 → 结果回填 → 再推理，直到给出答案 → [agent-loop.md](agent-loop.md)
+- [x] Tool 定义：名称 / 描述 / 参数 schema，LLM 靠什么选工具 → [agent-loop.md](agent-loop.md)
+- [x] tool calling 的完整消息结构（assistant 的 tool_calls、tool 角色消息） → [agent-loop.md](agent-loop.md)
+- [x] 循环终止条件与最大轮数保护 → [agent-loop.md](agent-loop.md)
+- [x] State：对话历史与中间结果怎么存 → [agent-loop.md](agent-loop.md)
 
 ### 框架对比（后置）
 
