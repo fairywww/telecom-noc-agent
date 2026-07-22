@@ -65,13 +65,11 @@ def test_工具清单_格式():
 
 def test_执行工具_未知工具不抛异常():
     from agent import 执行工具
-    假调用 = SimpleNamespace(id="x", function=SimpleNamespace(name="不存在的工具", arguments="{}"))
-    名, 参数, 结果 = 执行工具(假调用)
+    参数, 结果 = 执行工具("不存在的工具", "{}")
     assert "error" in 结果
 
 
 def test_执行工具_非法参数不抛异常():
     from agent import 执行工具
-    假调用 = SimpleNamespace(id="x", function=SimpleNamespace(name="查全网概览", arguments="不是JSON"))
-    名, 参数, 结果 = 执行工具(假调用)
+    参数, 结果 = 执行工具("查全网概览", "不是JSON")
     assert "error" in 结果

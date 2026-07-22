@@ -10,11 +10,13 @@
 
 启动：python3 -m uvicorn adapter:app --port 8002
 """
+import json
 import os
 from pathlib import Path
 
 import requests
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -111,6 +113,22 @@ def 智能诊断(请求: 提问):
     """
     from agent import 运行Agent   # 延迟导入：不用 Agent 功能时大屏后端不依赖 LLM 配置
     return 运行Agent(请求.question)
+
+
+@app.post("/api/agent/stream")
+def 智能诊断流(请求: 提问):
+    """SSE 版诊断接口：Agent 每产生一个事件（工具调用、答案增量）立即推送。
+
+    SSE（Server-Sent Events）格式约定：每条消息为 "data: <内容>\\n\\n"，
+    HTTP 连接保持打开、服务端持续写入——与 LLM 的流式应答同一机制。
+    """
+    from agent import 运行Agent流
+
+    def 事件流():
+        for 事 in 运行Agent流(请求.question):
+            yield f"data: {json.dumps(事, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(事件流(), media_type="text/event-stream")
 
 
 # 顺手托管前端页面（访问 http://localhost:8002/ 就能打开 index.html）

@@ -229,19 +229,38 @@ async function 发起诊断(){
   框.value = "";
   加消息("user", 问题);
   钮.disabled = true; 钮.textContent = "诊断中";
-  const 等待条 = 加消息("trace", "Agent 正在调工具、分析数据…（约需半分钟）");
+  let 答案条 = null;
   try {
-    const 应答 = await fetch("/api/agent", {
+    /* SSE 流式：事件一到就渲染——工具轨迹实时出现，答案逐字打出 */
+    const 应答 = await fetch("/api/agent/stream", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({question: 问题}),
     });
-    const 数据 = await 应答.json();
-    等待条.remove();
-    (数据.trace || []).forEach(步 => 加消息("trace", `[工具] ${步.工具} ${步.参数} → ${步.摘要}`));
-    加消息("agent", 数据.answer || 数据.error || "（无应答）");
+    const 读者 = 应答.body.getReader();
+    const 解码器 = new TextDecoder();
+    let 缓冲 = "";
+    while (true) {
+      const {done, value} = await 读者.read();
+      if (done) break;
+      缓冲 += 解码器.decode(value, {stream: true});
+      let 界;
+      while ((界 = 缓冲.indexOf("\n\n")) >= 0) {        /* SSE 消息以空行分隔 */
+        const 行 = 缓冲.slice(0, 界); 缓冲 = 缓冲.slice(界 + 2);
+        if (!行.startsWith("data: ")) continue;
+        const 事 = JSON.parse(行.slice(6));
+        if (事.事件 === "工具") {
+          加消息("trace", `[工具] ${事.工具} ${事.参数} → ${事.摘要}`);
+        } else if (事.事件 === "文字") {
+          if (!答案条) 答案条 = 加消息("agent", "");
+          答案条.textContent += 事.文本;
+          答案条.parentElement.scrollTop = 答案条.parentElement.scrollHeight;
+        } else if (事.事件 === "错误") {
+          加消息("agent", "出错了：" + 事.信息);
+        }
+      }
+    }
   } catch (错) {
-    等待条.remove();
     加消息("agent", "请求失败：" + 错);
   }
   钮.disabled = false; 钮.textContent = "诊断";

@@ -20,7 +20,7 @@
 ### Streaming
 
 - [x] 流式输出原理（SSE、chunk/delta、reasoning_content） → [llm-basics.md](llm-basics.md)
-- [ ] FastAPI 里实现逐字返回
-- [ ] 前端逐字渲染
+- [x] FastAPI 里实现逐字返回（StreamingResponse、生成器架构、流式 tool_calls 组装） → [streaming.md](streaming.md)
+- [x] 前端逐字渲染（fetch + ReadableStream、SSE 消息缓冲解析） → [streaming.md](streaming.md)
 
 > 已有基础：2025 年 3 月做过 Qwen / OpenAI 格式调用实验（wksp 下 Qwen.py、openaik.py），正式接入项目时回收沉淀。
