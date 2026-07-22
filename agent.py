@@ -35,6 +35,11 @@ def 查指定地市明细(city):
     return requests.get(f"{大屏后端}/api/city-detail", params={"city": city}, timeout=5).json()
 
 
+def 查运维知识(query):
+    from rag import 检索          # 延迟导入：首次调用时才构建向量索引
+    return {"命中": 检索(query, top_k=3)}
+
+
 无参数 = {"type": "object", "properties": {}, "required": []}
 
 工具表 = {
@@ -58,6 +63,18 @@ def 查指定地市明细(city):
             "required": ["city"],
         },
         "说明": "获取单个地市的完整明细：各专业的退服数与告警数、该市退服合计与告警合计",
+    },
+    "查运维知识": {
+        "函数": 查运维知识,
+        "参数": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "要查询的知识主题，例如：退服处置流程、告警等级定义、退服常见原因"},
+            },
+            "required": ["query"],
+        },
+        "说明": "检索运维知识库（处置流程、告警等级、退服常见原因、指标口径等规范资料）。"
+               "回答制度、流程、定义类问题时使用；实时数字指标请用其他工具。",
     },
 }
 

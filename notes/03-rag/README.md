@@ -8,20 +8,22 @@
 
 ### 文档处理
 
-- [ ] PDF / Markdown 解析
-- [ ] 文本切分（chunk 大小与重叠的权衡）
+- [x] Markdown 解析与按小节切分 → [rag-basics.md](rag-basics.md)
+- [ ] PDF 解析（知识库接入 PDF 资料时）
+- [x] 文本切分（chunk 粒度的权衡） → [rag-basics.md](rag-basics.md)
 
 ### Embedding 与向量库
 
-- [ ] Embedding 是什么（文本 → 向量，相近语义距离近）
-- [ ] BGE 中文 Embedding 模型
+- [x] Embedding 是什么（文本 → 向量，相近语义距离近） → [rag-basics.md](rag-basics.md)
+- [x] Embedding API 调用（Qwen3-Embedding） → [rag-basics.md](rag-basics.md)
+- [ ] BGE 中文 Embedding 模型（效果对比时）
 - [ ] FAISS（轻量本地）
-- [ ] Milvus（生产级向量库）
+- [ ] Milvus（生产级向量库，文档规模化时）
 
 ### 检索与生成
 
-- [ ] 相似度检索（top-k 召回）
-- [ ] 检索结果拼进 Prompt 的方式
-- [ ] 回答带出处引用
+- [x] 余弦相似度与 top-k 召回 → [rag-basics.md](rag-basics.md)
+- [x] 检索结果进入对话的方式（工具化 RAG vs 固定管线） → [rag-basics.md](rag-basics.md)
+- [x] 回答带出处引用 → [rag-basics.md](rag-basics.md)
 
 > 已有基础：2025 年 3 月做过 rag.py、Milvus 文档实验、sentence-transformers 本地 Embedding（all-MiniLM-L6-v2），正式接入项目时回收沉淀。
