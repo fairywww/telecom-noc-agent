@@ -128,24 +128,32 @@ def 运行Agent(任务, 最大轮数=8, 打印=False):
         {"role": "user", "content": 任务},
     ]
     轨迹 = []
+    总词元 = 0
 
     for 轮 in range(1, 最大轮数 + 1):
-        应答 = 客户端.chat.completions.create(
-            model=模型名,
-            messages=messages,
-            tools=工具清单(),
-            temperature=0.2,
-        )
-        if not 应答.choices:
-            # 个别服务在拒绝请求时返回 200 但 choices 为空，把原始应答暴露出来
-            raise RuntimeError(f"LLM 应答异常，无 choices：{应答.model_dump_json()[:500]}")
+        # ModelScope 偶发返回 200 但 choices 为空（评测中复现），自动重试最多 3 次
+        for 重试 in range(3):
+            应答 = 客户端.chat.completions.create(
+                model=模型名,
+                messages=messages,
+                tools=工具清单(),
+                temperature=0.2,
+            )
+            if 应答.usage:
+                总词元 += 应答.usage.total_tokens    # 历史逐轮重发，词元消耗随轮数增长
+            if 应答.choices:
+                break
+            if 打印:
+                print(f"[第 {轮} 轮] 服务端返回空应答，重试 {重试 + 1}/3")
+        else:
+            raise RuntimeError(f"LLM 连续 3 次返回空 choices：{应答.model_dump_json()[:300]}")
         消息 = 应答.choices[0].message
 
         # 终止条件①：模型不再要求调工具——它给出的就是最终答案
         if not 消息.tool_calls:
             if 打印:
                 print(f"\n=== 最终答案（第 {轮} 轮）===\n{消息.content}")
-            return {"answer": 消息.content, "trace": 轨迹, "rounds": 轮}
+            return {"answer": 消息.content, "trace": 轨迹, "rounds": 轮, "tokens": 总词元}
 
         # 模型要求调工具：这条要求必须原样计入历史（含 tool_call_id）
         messages.append({
@@ -173,7 +181,7 @@ def 运行Agent(任务, 最大轮数=8, 打印=False):
     # 终止条件②：轮数保护，防止模型陷入无限调用
     if 打印:
         print(f"达到最大轮数 {最大轮数}，终止。")
-    return {"answer": None, "error": f"达到最大轮数 {最大轮数}", "trace": 轨迹, "rounds": 最大轮数}
+    return {"answer": None, "error": f"达到最大轮数 {最大轮数}", "trace": 轨迹, "rounds": 最大轮数, "tokens": 总词元}
 
 
 if __name__ == "__main__":

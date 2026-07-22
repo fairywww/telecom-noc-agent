@@ -54,6 +54,19 @@ python3 rag.py "告警分几个等级？"
 
 不配置密钥时，大屏数据展示（①②④）不受影响；仅 Agent 诊断功能需要 LLM。
 
+装有 Docker 时可跳过 ①②④，一条命令启动全部服务：
+
+```bash
+docker compose up --build
+```
+
+开发自检：
+
+```bash
+python3 -m pytest tests/   # 单元测试（无网络依赖，秒级）
+python3 eval.py            # Agent 评测集（成功率/轮数/耗时/Token）
+```
+
 ## Roadmap
 
 - [x] **v0.1 最小数据链路** — 三文件跑通 模拟NOC → 适配层 → 大屏
@@ -62,7 +75,7 @@ python3 rag.py "告警分几个等级？"
 - [x] **v0.4 手写 Agent 循环** — 不用框架的工具调用循环：模型自主决定调 /api/kpi 或 /api/city-outage，基于真数据给诊断
 - [x] **v0.5 故障诊断 Agent** — 带参数工具、错误自纠、Agent 服务化，大屏内嵌诊断对话窗（含工具调用轨迹展示）
 - [x] **v0.6 RAG 通信知识库** — 知识文档切分 + Embedding + 余弦检索，作为 Agent 的知识工具，回答注明出处
-- [ ] **v0.7 工程化** — Docker 一键启动、测试、日志、评测（成功率/耗时/Token）
+- [x] **v0.7 工程化** — Docker compose 一键启动、pytest 测试套件、Agent 评测集（成功率/轮数/耗时/Token）
 - [ ] **backlog** — 大屏剩余面板（故障等级、实时告警）；适配层对接真实 NOC 数据源（鉴权/异常/超时）
 
 ## 知识库
@@ -74,5 +87,5 @@ python3 rag.py "告警分几个等级？"
 
 ## 技术栈
 
-当前：Python · FastAPI · 原生 HTML/JS · OpenAI 兼容 LLM API（Qwen）· 手写 Agent 循环（工具调用/多轮取数/轨迹展示）
-规划中：LLM 工具调用（手写循环）· Milvus/FAISS · BGE Embedding · Docker
+当前：Python · FastAPI · 原生 HTML/JS · OpenAI 兼容 LLM API（Qwen）· 手写 Agent 循环（工具调用/多轮取数/轨迹展示）· RAG（Embedding + 余弦检索）· Docker · pytest · 评测集
+规划中：Milvus/FAISS（知识规模化）· 多 Agent · MCP · SSE 流式输出

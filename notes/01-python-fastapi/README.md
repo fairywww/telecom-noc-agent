@@ -6,7 +6,7 @@
 
 ### Python 工程基础
 
-- [ ] 虚拟环境与 pip（venv / conda，requirements.txt 的作用）
+- [x] 虚拟环境与 pip（venv、requirements.txt 版本锁定） → [engineering.md](engineering.md)
 - [ ] 项目结构组织（代码、配置、文档怎么摆）
 - [ ] 类与异常处理
 - [x] JSON 的读写与解析 → [data-pipeline.md](data-pipeline.md)
@@ -28,6 +28,7 @@
 ### 工程化
 
 - [ ] logging 日志
-- [ ] 配置管理（地址、密钥不写死在代码里）
-- [ ] Docker 与 docker-compose 一键启动（v0.7）
-- [ ] Linux 部署基础（v0.7）
+- [x] 配置管理（代码与配置分离、环境变量注入） → [engineering.md](engineering.md)
+- [x] Docker 与 docker-compose 一键启动 → [engineering.md](engineering.md)
+- [x] pytest 自动化测试（TestClient、monkeypatch、纯函数优先） → [engineering.md](engineering.md)
+- [ ] Linux 部署基础

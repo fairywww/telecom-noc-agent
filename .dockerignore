@@ -1,0 +1,8 @@
+# 不进镜像的内容：密钥、本地环境、版本库、学习笔记
+.env
+.venv
+.git
+__pycache__
+*.pyc
+.DS_Store
+notes/

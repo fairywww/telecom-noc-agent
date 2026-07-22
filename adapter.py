@@ -10,6 +10,7 @@
 
 启动：python3 -m uvicorn adapter:app --port 8002
 """
+import os
 from pathlib import Path
 
 import requests
@@ -19,7 +20,8 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-NOC地址 = "http://localhost:8001"     # 真实场景通过配置注入生产 NOC 地址，不写进代码库
+# NOC 地址经环境变量注入：本机默认 localhost，Docker 里是服务名，生产是真实系统地址
+NOC地址 = os.environ.get("NOC_URL", "http://localhost:8001")
 
 
 def 全网汇总(行, 字段名):

@@ -1,0 +1,21 @@
+# 一键启动：docker compose up --build
+# 两个服务共用同一个镜像，只是启动命令不同。
+# 容器之间用服务名互访（noc-backend），不是 localhost——每个容器是独立的"小机器"。
+services:
+  noc-backend:
+    build: .
+    command: python3 -m uvicorn noc_backend:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+
+  adapter:
+    build: .
+    environment:
+      - NOC_URL=http://noc-backend:8001
+    env_file:
+      - path: .env        # 大模型密钥；缺失时大屏数据功能不受影响
+        required: false
+    ports:
+      - "8002:8002"
+    depends_on:
+      - noc-backend

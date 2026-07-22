@@ -18,7 +18,7 @@
 
 ### Agent 评测
 
-- [ ] 成功率：怎么定义"这次诊断算对"
-- [ ] 响应时间统计
-- [ ] Token 消耗统计与成本核算
-- [ ] 建一个小评测集回归测试
+- [x] 成功率：关键词判定与"这次诊断算对"的定义 → [agent-eval.md](agent-eval.md)
+- [x] 响应时间统计 → [agent-eval.md](agent-eval.md)
+- [x] Token 消耗统计（usage 累加、轮数与成本的关系） → [agent-eval.md](agent-eval.md)
+- [x] 小评测集回归测试（已实际抓到并修复一个缺陷） → [agent-eval.md](agent-eval.md)
