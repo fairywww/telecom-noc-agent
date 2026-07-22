@@ -89,6 +89,18 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 .legend .g4{background:rgba(0,229,255,.65)}
 .legend .g5{background:rgba(61,139,255,.75)}
 
+/* ---------- Agent 诊断对话窗 ---------- */
+.chat-log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px}
+.msg{font-size:12.5px;line-height:1.65;padding:8px 10px;border:1px solid var(--line2);white-space:pre-wrap;word-break:break-word}
+.msg.user{align-self:flex-end;max-width:85%;color:var(--cyan);background:rgba(0,229,255,.07)}
+.msg.agent{align-self:flex-start;max-width:96%;color:var(--txt);background:rgba(13,42,72,.5)}
+.msg.trace{align-self:flex-start;color:var(--dim);font-size:11px;border-style:dashed;padding:4px 8px}
+.chat-input{flex:none;display:flex;gap:8px;margin-top:10px}
+.chat-input input{flex:1;background:rgba(8,26,48,.7);border:1px solid var(--line);color:var(--txt);padding:9px 10px;font-size:13px;outline:none}
+.chat-input input::placeholder{color:var(--dim)}
+.chat-input button{background:rgba(0,229,255,.12);border:1px solid var(--line);color:var(--cyan);padding:0 18px;font-size:13px;letter-spacing:2px;cursor:pointer}
+.chat-input button:disabled{opacity:.45;cursor:wait}
+
 /* ---------- 未接入面板的占位 ---------- */
 .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim)}
 .placeholder b{font-size:13px;letter-spacing:3px;font-weight:400}
@@ -138,8 +150,19 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
     <!-- 右栏 -->
     <div class="col r">
       <section class="panel" style="flex:1">
-        <div class="p-hd"><i class="tick"></i><b>实时告警</b><span class="en">LIVE ALARMS</span></div>
-        <div class="p-bd"><div class="placeholder"><b>待 接 入</b><span>ROADMAP v0.2+</span></div></div>
+        <div class="p-hd"><i class="tick"></i><b>智能诊断</b><span class="en">DIAGNOSIS AGENT</span></div>
+        <div class="p-bd" style="display:flex;flex-direction:column">
+          <div class="chat-log" id="对话区">
+            <div class="msg agent">我是网络诊断 Agent，可基于实时数据回答。试试：
+· 现在全网状况如何？
+· 苏州的情况需要关注吗？
+· 哪个地市 4G 问题最突出？</div>
+          </div>
+          <div class="chat-input">
+            <input id="问题框" placeholder="输入运维问题，回车或点击诊断">
+            <button id="发送钮">诊断</button>
+          </div>
+        </div>
       </section>
     </div>
   </main>
@@ -187,6 +210,45 @@ async function 取地市退服并展示(){
     </div>`;
   }).join("");
 }
+
+/* ---- Agent 诊断对话：提问 → 展示工具调用轨迹 → 展示结论 ---- */
+function 加消息(类别, 文字){
+  const 区 = document.getElementById("对话区");
+  const 条 = document.createElement("div");
+  条.className = "msg " + 类别;
+  条.textContent = 文字;
+  区.appendChild(条);
+  区.scrollTop = 区.scrollHeight;
+  return 条;
+}
+
+async function 发起诊断(){
+  const 框 = document.getElementById("问题框"), 钮 = document.getElementById("发送钮");
+  const 问题 = 框.value.trim();
+  if (!问题 || 钮.disabled) return;
+  框.value = "";
+  加消息("user", 问题);
+  钮.disabled = true; 钮.textContent = "诊断中";
+  const 等待条 = 加消息("trace", "Agent 正在调工具、分析数据…（约需半分钟）");
+  try {
+    const 应答 = await fetch("/api/agent", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({question: 问题}),
+    });
+    const 数据 = await 应答.json();
+    等待条.remove();
+    (数据.trace || []).forEach(步 => 加消息("trace", `[工具] ${步.工具} ${步.参数} → ${步.摘要}`));
+    加消息("agent", 数据.answer || 数据.error || "（无应答）");
+  } catch (错) {
+    等待条.remove();
+    加消息("agent", "请求失败：" + 错);
+  }
+  钮.disabled = false; 钮.textContent = "诊断";
+}
+
+document.getElementById("发送钮").addEventListener("click", 发起诊断);
+document.getElementById("问题框").addEventListener("keydown", e => { if (e.key === "Enter") 发起诊断(); });
 
 适配舞台(); addEventListener("resize", 适配舞台);
 走时(); setInterval(走时, 1000);

@@ -22,8 +22,8 @@
 - [x] 自动接口文档（/docs、/redoc） → [fastapi.md](fastapi.md)
 - [x] 前后端接口契约与向后兼容 → [data-pipeline.md](data-pipeline.md)
 - [x] 聚合接口与明细接口的设计取舍 → [api-shapes.md](api-shapes.md)
-- [ ] POST 请求体与 Pydantic 参数校验（v0.3 接真数据时）
-- [ ] 异常处理与超时兜底（v0.3 接真数据时）
+- [x] POST 请求体与 Pydantic 参数校验 → [../04-agent/tool-parameters.md](../04-agent/tool-parameters.md)
+- [x] 异常处理与超时兜底（错误回填、防御式执行） → [../04-agent/tool-parameters.md](../04-agent/tool-parameters.md)
 
 ### 工程化
 

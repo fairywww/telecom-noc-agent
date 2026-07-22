@@ -15,6 +15,7 @@ from pathlib import Path
 import requests
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -72,6 +73,42 @@ def city_outage():
     # 排序放服务端：保证所有使用方看到同一口径（退服多的排前面）
     城市列表.sort(key=lambda 城: 城["total"], reverse=True)
     return {"cities": 城市列表}
+
+
+@app.get("/api/city-detail")
+def city_detail(city: str):
+    """单地市完整明细。city 是必填查询参数——缺失时 FastAPI 自动应答 422。
+
+    未知地市不抛异常，而是返回 error + 可选列表：调用方（尤其是 Agent）
+    看到错误信息后可以自行纠正。
+    """
+    应答 = requests.get(f"{NOC地址}/api/statistics/all", timeout=5).json()
+    行 = 应答["data"]
+    if city not in 行:
+        return {"error": f"未知地市：{city}", "可选地市": list(行.keys())}
+    各专业 = 行[city]
+    return {
+        "city": city,
+        "by_tech": 各专业,
+        "outage_total": sum(数据["outage_count"] for 数据 in 各专业.values()),
+        "alarm_total": sum(数据["alarm_count"] for 数据 in 各专业.values()),
+    }
+
+
+class 提问(BaseModel):
+    """POST 请求体的契约：Pydantic 负责校验——缺 question 字段直接 422"""
+    question: str
+
+
+@app.post("/api/agent")
+def 智能诊断(请求: 提问):
+    """把 Agent 包成接口，供大屏对话面板调用。
+
+    演示项目图省事放在大屏后端里；生产中 Agent 应拆成独立服务
+    （耗时长、资源占用特性完全不同）。
+    """
+    from agent import 运行Agent   # 延迟导入：不用 Agent 功能时大屏后端不依赖 LLM 配置
+    return 运行Agent(请求.question)
 
 
 # 顺手托管前端页面（访问 http://localhost:8002/ 就能打开 index.html）

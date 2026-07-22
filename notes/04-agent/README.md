@@ -13,6 +13,8 @@
 - [x] tool calling 的完整消息结构（assistant 的 tool_calls、tool 角色消息） → [agent-loop.md](agent-loop.md)
 - [x] 循环终止条件与最大轮数保护 → [agent-loop.md](agent-loop.md)
 - [x] State：对话历史与中间结果怎么存 → [agent-loop.md](agent-loop.md)
+- [x] 带参数的工具：schema 设计、arguments 解析、防御式执行 → [tool-parameters.md](tool-parameters.md)
+- [x] Agent 服务化：HTTP 接口、执行轨迹、前端集成 → [tool-parameters.md](tool-parameters.md)
 
 ### 框架对比（后置）
 
