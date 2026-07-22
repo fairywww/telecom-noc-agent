@@ -50,5 +50,29 @@ def kpi():
     }
 
 
+@app.get("/api/city-outage")
+def city_outage():
+    """明细接口：逐地市给出退服数据（与 /api/kpi 的聚合形态相对）。
+
+    契约设计：各专业的数字放在 by_tech 字典里而不是写死
+    outage_4g/outage_5g 字段——将来数据源新增专业（如 700M），
+    本接口与前端都无需改动。
+    """
+    应答 = requests.get(f"{NOC地址}/api/statistics/all", timeout=5).json()
+    行 = 应答["data"]
+
+    城市列表 = [
+        {
+            "city": 地市,
+            "by_tech": {专业: 数据["outage_count"] for 专业, 数据 in 各专业.items()},
+            "total": sum(数据["outage_count"] for 数据 in 各专业.values()),
+        }
+        for 地市, 各专业 in 行.items()
+    ]
+    # 排序放服务端：保证所有使用方看到同一口径（退服多的排前面）
+    城市列表.sort(key=lambda 城: 城["total"], reverse=True)
+    return {"cities": 城市列表}
+
+
 # 顺手托管前端页面（访问 http://localhost:8002/ 就能打开 index.html）
 app.mount("/", StaticFiles(directory=str(Path(__file__).parent), html=True))

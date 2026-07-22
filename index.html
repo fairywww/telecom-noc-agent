@@ -75,6 +75,20 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 .kpi span{font-size:11.5px;color:var(--sub)}
 .kpi.hot b{color:var(--urgent);text-shadow:0 0 16px rgba(255,214,102,.4)}
 
+/* ---------- 地市退服条形图 ---------- */
+.bars{flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;padding:8px 16px}
+.crow{display:flex;align-items:center;gap:14px}
+.crow .name{width:60px;flex:none;text-align:right;font-size:16px;letter-spacing:3px;color:var(--txt)}
+.crow .track{flex:1;height:24px;display:flex;background:rgba(8,26,48,.55);border:1px solid var(--line2)}
+.seg{height:100%}
+.seg.g4{background:linear-gradient(90deg,rgba(0,229,255,.25),rgba(0,229,255,.75))}
+.seg.g5{background:linear-gradient(90deg,rgba(61,139,255,.30),rgba(61,139,255,.85))}
+.crow .val{width:56px;flex:none;font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:20px;color:#DFF6FF;text-shadow:0 0 12px rgba(0,229,255,.35)}
+.legend{flex:none;display:flex;justify-content:center;gap:22px;padding:6px 0 2px;font-size:11px;color:var(--sub)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+.legend .g4{background:rgba(0,229,255,.65)}
+.legend .g5{background:rgba(61,139,255,.75)}
+
 /* ---------- 未接入面板的占位 ---------- */
 .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim)}
 .placeholder b{font-size:13px;letter-spacing:3px;font-weight:400}
@@ -114,7 +128,10 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
     <div class="col c">
       <section class="panel" style="flex:1">
         <div class="p-hd"><i class="tick"></i><b>地市退服分布</b><span class="en">CITY OUTAGE</span></div>
-        <div class="p-bd"><div class="placeholder"><b>待 接 入</b><span>ROADMAP v0.2+</span></div></div>
+        <div class="p-bd" style="display:flex;flex-direction:column">
+          <div class="bars" id="城市条形"></div>
+          <div class="legend"><span><i class="g4"></i>4G</span><span><i class="g5"></i>5G</span></div>
+        </div>
       </section>
     </div>
 
@@ -152,9 +169,29 @@ async function 取数并展示(){
   document.getElementById("告警数").textContent = 数据.alarm_total;
 }
 
+/* ---- 地市退服条形图：明细列表 → 按最大值归一化的分段条 ---- */
+async function 取地市退服并展示(){
+  const 应答 = await fetch("/api/city-outage");
+  const 数据 = await 应答.json();
+  const 城市们 = 数据.cities;                                  // 服务端已按 total 降序
+  const 最大 = Math.max(...城市们.map(城 => 城.total));         // 用最大值做宽度基准
+  document.getElementById("城市条形").innerHTML = 城市们.map(城 => {
+    const 段 = Object.entries(城.by_tech).map(([专业, 值]) =>
+      `<div class="seg ${专业 === "4G" ? "g4" : "g5"}"
+            style="width:${(值/最大*100).toFixed(1)}%"
+            title="${城.city} ${专业}：${值}"></div>`).join("");
+    return `<div class="crow">
+      <span class="name">${城.city}</span>
+      <div class="track">${段}</div>
+      <b class="val">${城.total}</b>
+    </div>`;
+  }).join("");
+}
+
 适配舞台(); addEventListener("resize", 适配舞台);
 走时(); setInterval(走时, 1000);
 取数并展示(); setInterval(取数并展示, 5000);
+取地市退服并展示(); setInterval(取地市退服并展示, 5000);
 </script>
 </body>
 </html>

@@ -11,6 +11,7 @@
 - [ ] 类与异常处理
 - [x] JSON 的读写与解析 → [data-pipeline.md](data-pipeline.md)
 - [x] 函数抽取与复用（DRY）、生成器表达式 → [data-pipeline.md](data-pipeline.md)
+- [x] 列表/字典推导式与排序 → [api-shapes.md](api-shapes.md)
 
 ### FastAPI
 
@@ -20,6 +21,7 @@
 - [x] 静态文件托管与路由匹配顺序 → [fastapi.md](fastapi.md)
 - [x] 自动接口文档（/docs、/redoc） → [fastapi.md](fastapi.md)
 - [x] 前后端接口契约与向后兼容 → [data-pipeline.md](data-pipeline.md)
+- [x] 聚合接口与明细接口的设计取舍 → [api-shapes.md](api-shapes.md)
 - [ ] POST 请求体与 Pydantic 参数校验（v0.3 接真数据时）
 - [ ] 异常处理与超时兜底（v0.3 接真数据时）
 
