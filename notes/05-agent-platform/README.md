@@ -12,9 +12,9 @@
 
 ### MCP（Model Context Protocol）
 
-- [ ] MCP 是什么，解决什么问题（工具接入标准化）
-- [ ] 写一个 MCP Server 暴露 NOC 工具
-- [ ] MCP 与自定义 tool calling 的对比
+- [x] MCP 是什么，解决什么问题（M×N → M+N） → [mcp.md](mcp.md)
+- [x] 写一个 MCP Server 暴露 NOC 工具（手写协议，stdio 传输） → [mcp.md](mcp.md)
+- [x] MCP 与自定义 tool calling 的对比（同一份契约，两种信封） → [mcp.md](mcp.md)
 
 ### Agent 评测
 

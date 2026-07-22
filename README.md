@@ -77,6 +77,7 @@ python3 eval.py            # Agent 评测集（成功率/轮数/耗时/Token）
 - [x] **v0.6 RAG 通信知识库** — 知识文档切分 + Embedding + 余弦检索，作为 Agent 的知识工具，回答注明出处
 - [x] **v0.7 工程化** — Docker compose 一键启动、pytest 测试套件、Agent 评测集（成功率/轮数/耗时/Token）
 - [x] **v0.8 SSE 流式输出** — Agent 重构为单一流式生成器；工具轨迹实时推送、答案逐字渲染
+- [x] **v0.9 MCP Server** — 工具层独立模块；手写最小 MCP 协议实现（initialize / tools/list / tools/call，stdio 传输）
 - [ ] **backlog** — 大屏剩余面板（故障等级、实时告警）；适配层对接真实 NOC 数据源（鉴权/异常/超时）
 
 ## 知识库
@@ -89,4 +90,5 @@ python3 eval.py            # Agent 评测集（成功率/轮数/耗时/Token）
 ## 技术栈
 
 当前：Python · FastAPI · 原生 HTML/JS · OpenAI 兼容 LLM API（Qwen）· 手写 Agent 循环（工具调用/多轮取数/轨迹展示）· RAG（Embedding + 余弦检索）· Docker · pytest · 评测集
-规划中：Milvus/FAISS（知识规模化）· 多 Agent · MCP
+当前还包括：MCP Server（手写协议实现）
+规划中：Milvus/FAISS（知识规模化）· 多 Agent · LangGraph 对比
