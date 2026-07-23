@@ -222,6 +222,8 @@ function 加消息(类别, 文字){
   return 条;
 }
 
+const 会话ID = "web-" + Math.random().toString(36).slice(2);   // 每次打开大屏 = 一个新会话
+
 async function 发起诊断(){
   const 框 = document.getElementById("问题框"), 钮 = document.getElementById("发送钮");
   const 问题 = 框.value.trim();
@@ -235,7 +237,7 @@ async function 发起诊断(){
     const 应答 = await fetch("/api/agent/stream", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({question: 问题}),
+      body: JSON.stringify({question: 问题, session_id: 会话ID}),
     });
     const 读者 = 应答.body.getReader();
     const 解码器 = new TextDecoder();

@@ -102,6 +102,7 @@ def city_detail(city: str):
 class 提问(BaseModel):
     """POST 请求体的契约：Pydantic 负责校验——缺 question 字段直接 422"""
     question: str
+    session_id: str = ""    # 可选会话号；带上即启用多轮对话记忆
 
 
 @app.post("/api/agent")
@@ -123,10 +124,19 @@ def 智能诊断流(请求: 提问):
     HTTP 连接保持打开、服务端持续写入——与 LLM 的流式应答同一机制。
     """
     from agent import 运行Agent流
+    from conversation import 取会话
+
+    会话对象 = 取会话(请求.session_id)
 
     def 事件流():
-        for 事 in 运行Agent流(请求.question):
+        答案段 = []
+        历史 = 会话对象.组装历史() if 会话对象 else None
+        for 事 in 运行Agent流(请求.question, 历史片段=历史):
+            if 事["事件"] == "文字":
+                答案段.append(事["文本"])
             yield f"data: {json.dumps(事, ensure_ascii=False)}\n\n"
+        if 会话对象 and 答案段:          # 只记结论，不记工具中间量
+            会话对象.记录(请求.question, "".join(答案段))
 
     return StreamingResponse(事件流(), media_type="text/event-stream")
 

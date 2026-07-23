@@ -25,7 +25,7 @@ from tools import 工具表, 工具清单, 执行工具   # noqa: F401 —— �
 默认系统提示 = (项目目录 / "prompts" / "agent.txt").read_text(encoding="utf-8")
 
 
-def 运行Agent流(任务, 最大轮数=8, 工具集=None, 系统提示文本=None):
+def 运行Agent流(任务, 最大轮数=8, 工具集=None, 系统提示文本=None, 历史片段=None):
     """核心生成器：执行 Agent 循环，边执行边产出事件字典。
 
     工具集 / 系统提示文本 可定制——同一个循环既能当默认诊断 Agent，
@@ -39,10 +39,11 @@ def 运行Agent流(任务, 最大轮数=8, 工具集=None, 系统提示文本=No
       {"事件":"错误",  "信息": …}                       —— 异常结束
     """
     工具集 = 工具集 or 工具表
-    messages = [
-        {"role": "system", "content": 系统提示文本 or 默认系统提示},
-        {"role": "user", "content": 任务},
-    ]
+    messages = (
+        [{"role": "system", "content": 系统提示文本 or 默认系统提示}]
+        + list(历史片段 or [])                      # 多轮对话：历史由调用方维护（见 conversation.py）
+        + [{"role": "user", "content": 任务}]
+    )
     总词元 = 0
 
     for 轮 in range(1, 最大轮数 + 1):
@@ -108,12 +109,12 @@ def 运行Agent流(任务, 最大轮数=8, 工具集=None, 系统提示文本=No
     yield {"事件": "错误", "信息": f"达到最大轮数 {最大轮数}"}
 
 
-def 运行Agent(任务, 最大轮数=8, 打印=False, 工具集=None, 系统提示文本=None):
+def 运行Agent(任务, 最大轮数=8, 打印=False, 工具集=None, 系统提示文本=None, 历史片段=None):
     """非流式封装：消费生成器，攒出完整结果。命令行与评测用它。"""
     答案段, 轨迹 = [], []
     轮数 = 词元 = 0
     错误 = None
-    for 事 in 运行Agent流(任务, 最大轮数, 工具集, 系统提示文本):
+    for 事 in 运行Agent流(任务, 最大轮数, 工具集, 系统提示文本, 历史片段):
         if 事["事件"] == "文字":
             答案段.append(事["文本"])
             if 打印:

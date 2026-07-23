@@ -15,6 +15,8 @@
 - [x] State：对话历史与中间结果怎么存 → [agent-loop.md](agent-loop.md)
 - [x] 带参数的工具：schema 设计、arguments 解析、防御式执行 → [tool-parameters.md](tool-parameters.md)
 - [x] Agent 服务化：HTTP 接口、执行轨迹、前端集成 → [tool-parameters.md](tool-parameters.md)
+- [x] 多轮对话与会话管理（session、代词指代实测） → [memory.md](memory.md)
+- [x] Memory：滚动摘要 + 近期原文，只记结论不记工具中间量 → [memory.md](memory.md)
 
 ### 框架对比（后置）
 
