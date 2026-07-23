@@ -19,7 +19,7 @@
 | [02 LLM 应用开发](02-llm-api/) | 大模型 API、Prompt、流式输出 | v0.4 前置 | 进行中 |
 | [03 RAG 知识库](03-rag/) | 文档解析、Embedding、向量检索 | v0.6 | 进行中 |
 | [04 Agent 开发](04-agent/) | 手写 Agent 循环、工具调用 | v0.4 – v0.5 | 进行中 |
-| [05 企业级 Agent 平台](05-agent-platform/) | 多 Agent、MCP、评测 | v0.7 及以后 | 进行中 |
+| [05 企业级 Agent 平台](05-agent-platform/) | 多 Agent、MCP、评测 | v0.7 及以后 | 已完成 |
 | [06 通信行业 Agent](06-telecom-agent/) | 故障诊断、工单、优化建议 | 最终形态 | 未开始 |
 
 阶段划分是知识的组织方式，不是严格的时间顺序：项目推进到哪一部分，就在对应阶段沉淀笔记。

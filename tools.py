@@ -70,7 +70,7 @@ def 查运维知识(query):
 }
 
 
-def 工具清单():
+def 工具清单(工具集=None):
     """把工具表转成 OpenAI tools 格式——LLM 只凭 name/description/参数说明决定怎么调"""
     return [
         {
@@ -81,21 +81,22 @@ def 工具清单():
                 "parameters": 信息["参数"],
             },
         }
-        for 名, 信息 in 工具表.items()
+        for 名, 信息 in (工具集 or 工具表).items()
     ]
 
 
-def 执行工具(名, 参数文本):
+def 执行工具(名, 参数文本, 工具集=None):
     """执行一次工具调用。任何失败都不抛异常，
     而是把错误作为结果返回——回填给调用方，让其自行纠正。"""
+    工具集 = 工具集 or 工具表
     try:
         参数 = json.loads(参数文本 or "{}")
     except json.JSONDecodeError:
         return {}, {"error": "参数不是合法 JSON"}
-    if 名 not in 工具表:
+    if 名 not in 工具集:
         return 参数, {"error": f"未知工具：{名}"}
     try:
-        return 参数, 工具表[名]["函数"](**参数)
+        return 参数, 工具集[名]["函数"](**参数)
     except TypeError as 错:
         return 参数, {"error": f"参数不匹配：{错}"}
     except requests.RequestException as 错:

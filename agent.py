@@ -22,11 +22,14 @@ from tools import 工具表, 工具清单, 执行工具   # noqa: F401 —— �
 
 # ---------- 循环层 ----------
 
-系统提示 = (项目目录 / "prompts" / "agent.txt").read_text(encoding="utf-8")
+默认系统提示 = (项目目录 / "prompts" / "agent.txt").read_text(encoding="utf-8")
 
 
-def 运行Agent流(任务, 最大轮数=8):
+def 运行Agent流(任务, 最大轮数=8, 工具集=None, 系统提示文本=None):
     """核心生成器：执行 Agent 循环，边执行边产出事件字典。
+
+    工具集 / 系统提示文本 可定制——同一个循环既能当默认诊断 Agent，
+    也能装上不同的"人设 + 工具箱"充当专家子 Agent（见 multi_agent.py）。
 
     事件类型：
       {"事件":"文字",  "文本": 增量}                    —— 答案逐字产出
@@ -35,8 +38,9 @@ def 运行Agent流(任务, 最大轮数=8):
       {"事件":"完成",  "轮数":n, "词元":m}              —— 正常结束
       {"事件":"错误",  "信息": …}                       —— 异常结束
     """
+    工具集 = 工具集 or 工具表
     messages = [
-        {"role": "system", "content": 系统提示},
+        {"role": "system", "content": 系统提示文本 or 默认系统提示},
         {"role": "user", "content": 任务},
     ]
     总词元 = 0
@@ -47,7 +51,7 @@ def 运行Agent流(任务, 最大轮数=8):
             应答流 = 客户端.chat.completions.create(
                 model=模型名,
                 messages=messages,
-                tools=工具清单(),
+                tools=工具清单(工具集),
                 temperature=0.2,
                 stream=True,
                 stream_options={"include_usage": True},
@@ -94,7 +98,7 @@ def 运行Agent流(任务, 最大轮数=8):
         messages.append({"role": "assistant", "content": "".join(内容段),
                          "tool_calls": 工具调用列表})
         for 调用 in 工具调用列表:
-            参数, 结果 = 执行工具(调用["function"]["name"], 调用["function"]["arguments"])
+            参数, 结果 = 执行工具(调用["function"]["name"], 调用["function"]["arguments"], 工具集)
             结果文本 = json.dumps(结果, ensure_ascii=False)
             yield {"事件": "工具", "工具": 调用["function"]["name"],
                    "参数": json.dumps(参数, ensure_ascii=False), "摘要": 结果文本[:100]}
@@ -104,12 +108,12 @@ def 运行Agent流(任务, 最大轮数=8):
     yield {"事件": "错误", "信息": f"达到最大轮数 {最大轮数}"}
 
 
-def 运行Agent(任务, 最大轮数=8, 打印=False):
+def 运行Agent(任务, 最大轮数=8, 打印=False, 工具集=None, 系统提示文本=None):
     """非流式封装：消费生成器，攒出完整结果。命令行与评测用它。"""
     答案段, 轨迹 = [], []
     轮数 = 词元 = 0
     错误 = None
-    for 事 in 运行Agent流(任务, 最大轮数):
+    for 事 in 运行Agent流(任务, 最大轮数, 工具集, 系统提示文本):
         if 事["事件"] == "文字":
             答案段.append(事["文本"])
             if 打印:

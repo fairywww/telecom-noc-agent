@@ -6,9 +6,9 @@
 
 ### 多 Agent
 
-- [ ] 总控 Agent + 子 Agent 架构（告警 Agent / 指标 Agent / 工单 Agent）
-- [ ] Agent 间怎么传递任务与结果
-- [ ] 什么时候该拆多 Agent，什么时候一个就够
+- [x] 总控 Agent + 子 Agent 架构（Agent as Tool） → [multi-agent.md](multi-agent.md)
+- [x] Agent 间怎么传递任务与结果（自包含子任务、来源标注、局限传递） → [multi-agent.md](multi-agent.md)
+- [x] 什么时候该拆多 Agent（实测：2.6 倍词元、2.9 倍耗时的取舍） → [multi-agent.md](multi-agent.md)
 
 ### MCP（Model Context Protocol）
 
