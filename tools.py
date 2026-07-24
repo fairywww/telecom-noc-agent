@@ -31,6 +31,13 @@ def 查运维知识(query):
     return {"命中": 检索(query, top_k=3)}
 
 
+def 创建处置工单(city, summary, action, deadline_hours=8):
+    应答 = requests.post(f"{大屏后端}/api/tickets", timeout=5, json={
+        "city": city, "summary": summary, "action": action, "deadline_hours": deadline_hours,
+    })
+    return 应答.json()
+
+
 无参数 = {"type": "object", "properties": {}, "required": []}
 
 工具表 = {
@@ -66,6 +73,21 @@ def 查运维知识(query):
         },
         "说明": "检索运维知识库（处置流程、告警等级、退服常见原因、指标口径等规范资料）。"
                "回答制度、流程、定义类问题时使用；实时数字指标请用其他工具。",
+    },
+    "创建处置工单": {
+        "函数": 创建处置工单,
+        "参数": {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "故障所属地市，例如 南京"},
+                "summary": {"type": "string", "description": "故障摘要：现象与关键数字，一两句话"},
+                "action": {"type": "string", "description": "处置建议：依据规范给出的具体动作"},
+                "deadline_hours": {"type": "integer", "description": "处置时限（小时），依据规范的响应时限要求，默认 8"},
+            },
+            "required": ["city", "summary", "action"],
+        },
+        "说明": "创建故障处置工单（写操作，会真实生成一张工单）。"
+               "仅在用户明确要求建单/派单时调用；同一地市已有待处理工单时系统会拒绝重复创建。",
     },
 }
 

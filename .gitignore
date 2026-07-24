@@ -1,6 +1,9 @@
 # 密钥与本地配置，绝不提交
 .env
 
+# 运行期产生的数据，不进代码库
+data/tickets.db
+
 __pycache__/
 *.pyc
 .DS_Store

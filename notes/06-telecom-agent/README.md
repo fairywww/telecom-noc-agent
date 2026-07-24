@@ -18,9 +18,9 @@ RAG 知识库    网络工具         数据分析
 
 ### 场景能力
 
-- [ ] 故障诊断：告警/指标输入 → 定位异常 → 诊断结论
-- [ ] 智能问答：基于通信知识库的检索问答
-- [ ] 自动生成工单：诊断结果 → 结构化工单
+- [x] 故障诊断：指标输入 → 定位异常 → 诊断结论 → [../04-agent/tool-parameters.md](../04-agent/tool-parameters.md)
+- [x] 智能问答：基于通信知识库的检索问答 → [../03-rag/rag-basics.md](../03-rag/rag-basics.md)
+- [x] 自动生成工单：诊断结果 → 结构化工单（写操作三道防线） → [ticket-generation.md](ticket-generation.md)
 - [ ] 网络优化建议：基于数据分析给出建议
 
 ### 行业沉淀

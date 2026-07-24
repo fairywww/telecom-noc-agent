@@ -116,6 +116,26 @@ def 智能诊断(请求: 提问):
     return 运行Agent(请求.question)
 
 
+class 建单请求(BaseModel):
+    city: str
+    summary: str          # 故障摘要
+    action: str           # 处置建议
+    deadline_hours: int = 8
+
+
+@app.post("/api/tickets")
+def 建单(请求: 建单请求):
+    """创建处置工单（写操作）。幂等保护在存储层：同地市已有待处理工单则拒绝。"""
+    from tickets import 创建工单
+    return 创建工单(请求.city, 请求.summary, 请求.action, 请求.deadline_hours)
+
+
+@app.get("/api/tickets")
+def 查工单():
+    from tickets import 工单列表
+    return {"tickets": 工单列表()}
+
+
 @app.post("/api/agent/stream")
 def 智能诊断流(请求: 提问):
     """SSE 版诊断接口：Agent 每产生一个事件（工具调用、答案增量）立即推送。
