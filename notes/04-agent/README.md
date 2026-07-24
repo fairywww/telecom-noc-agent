@@ -24,4 +24,4 @@
 - [x] LangGraph：State / Node / Tool 概念，与手写版逐概念对照 → [langgraph-comparison.md](langgraph-comparison.md)
 - [x] 同一个诊断 Agent 用 LangGraph 重写并实测行为一致 → [langgraph-comparison.md](langgraph-comparison.md)
 
-> 已有基础：2025 年 3 月做过 tool calling 实验（weather.py、tools_test_note.py、agent.py），正式手写循环时回收沉淀。
+> 已有基础：2025 年 3 月做过 tool calling 实验（weather.py、tools_test_note.py、noc_agent/agent/loop.py），正式手写循环时回收沉淀。

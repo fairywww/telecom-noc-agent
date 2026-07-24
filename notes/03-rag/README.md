@@ -26,4 +26,4 @@
 - [x] 检索结果进入对话的方式（工具化 RAG vs 固定管线） → [rag-basics.md](rag-basics.md)
 - [x] 回答带出处引用 → [rag-basics.md](rag-basics.md)
 
-> 已有基础：2025 年 3 月做过 rag.py、Milvus 文档实验、sentence-transformers 本地 Embedding（all-MiniLM-L6-v2），正式接入项目时回收沉淀。
+> 已有基础：2025 年 3 月做过 noc_agent/rag/retrieval.py、Milvus 文档实验、sentence-transformers 本地 Embedding（all-MiniLM-L6-v2），正式接入项目时回收沉淀。

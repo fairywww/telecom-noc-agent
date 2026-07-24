@@ -12,4 +12,4 @@ COPY . .
 EXPOSE 8001 8002
 
 # 默认启动大屏后端；noc-backend 服务在 compose 里覆盖此命令
-CMD ["python3", "-m", "uvicorn", "adapter:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["python3", "-m", "uvicorn", "noc_agent.server.adapter:app", "--host", "0.0.0.0", "--port", "8002"]

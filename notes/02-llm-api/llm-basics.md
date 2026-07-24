@@ -1,6 +1,6 @@
 # 大模型 API 调用基础
 
-**范围说明**：本文基于 `llm.py`、`prompts/system.txt` 与 `.env` 的实现过程。核心内容：OpenAI 兼容格式、密钥管理、流式输出与推理模型、System Prompt 的实际作用。
+**范围说明**：本文基于 `noc_agent/llm.py`、`prompts/system.txt` 与 `.env` 的实现过程。核心内容：OpenAI 兼容格式、密钥管理、流式输出与推理模型、System Prompt 的实际作用。
 
 ## 1. OpenAI 兼容格式
 
@@ -13,7 +13,7 @@ OpenAI 的聊天接口格式已成为行业事实标准。国内外主流服务�
 | DeepSeek 官方 | `https://api.deepseek.com/v1` | |
 | 本地 Ollama | `http://localhost:11434/v1` | 完全离线，适合内网环境 |
 
-一次调用的三要素（`llm.py` 第 33–38 行）：`base_url`（找谁）、`api_key`（凭什么）、`model`（用哪个模型）。
+一次调用的三要素（`noc_agent/llm.py` 第 33–38 行）：`base_url`（找谁）、`api_key`（凭什么）、`model`（用哪个模型）。
 
 ### messages 结构
 
@@ -35,7 +35,7 @@ OpenAI 的聊天接口格式已成为行业事实标准。国内外主流服务�
 |------|---------|------|
 | `.env` | 否（已进 `.gitignore`） | 真实密钥与本地配置 |
 | `.env.example` | 是 | 模板，告诉协作者需要配置哪些项 |
-| `llm.py` 中的 `加载环境文件()` | 是 | 启动时把 `.env` 内容写入环境变量 |
+| `noc_agent/llm.py` 中的 `load_env_file()` | 是 | 启动时把 `.env` 内容写入环境变量 |
 
 代码中通过 `os.environ["LLM_API_KEY"]` 读取——用方括号而非 `.get()`，缺失时立即报错，避免带着空密钥继续运行到更难排查的位置。
 
@@ -56,7 +56,7 @@ OpenAI 的聊天接口格式已成为行业事实标准。国内外主流服务�
 | `reasoning_content` | 思考过程，先到 |
 | `content` | 最终答案，后到 |
 
-`llm.py` 的处理：思考过程仅在流式打印时展示，函数返回值只含最终答案——调用方（将来的 Agent）只需要结论。
+`noc_agent/llm.py` 的处理：思考过程仅在流式打印时展示，函数返回值只含最终答案——调用方（将来的 Agent）只需要结论。
 
 ## 5. System Prompt 的实际作用
 
@@ -83,7 +83,7 @@ OpenAI 的聊天接口格式已成为行业事实标准。国内外主流服务�
 ## 7. 验证
 
 ```bash
-python3 llm.py "全网退服 153 个、告警 477 条，请评估严重程度。"
+python3 -m noc_agent.llm "全网退服 153 个、告警 477 条，请评估严重程度。"
 ```
 
 预期：先滚动输出思考过程，随后 `=== 结论 ===` 分隔，输出结构化答案。

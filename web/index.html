@@ -109,7 +109,7 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 .t-body{font-size:12px;color:var(--txt);line-height:1.5;margin:4px 0}
 .t-meta{font-size:10.5px;color:var(--dim)}
 
-/* ---------- 未接入面板的占位 ---------- */
+/* ---------- 空状态占位 ---------- */
 .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim)}
 .placeholder b{font-size:13px;letter-spacing:3px;font-weight:400}
 .placeholder span{font-size:11px;letter-spacing:1px;border:1px solid var(--line2);padding:2px 10px}
@@ -119,9 +119,9 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 
 <div id="stage">
   <header>
-    <div class="h-side l"><div class="h-clock" id="时钟">--:--:--</div></div>
+    <div class="h-side l"><div class="h-clock" id="clock">--:--:--</div></div>
     <h1>云网智能运维监控大屏</h1>
-    <div class="h-side r"><div class="h-date" id="日期">----</div></div>
+    <div class="h-side r"><div class="h-date" id="dateText">----</div></div>
   </header>
 
   <main>
@@ -131,16 +131,15 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
         <div class="p-hd"><i class="tick"></i><b>网络运行总览</b><span class="en">NETWORK OVERVIEW</span></div>
         <div class="p-bd">
           <div class="kpi-grid">
-            <div class="kpi"><b id="总数">--</b><span>全网退服总数</span></div>
-            <div class="kpi"><b id="地市数">--</b><span>覆盖地市</span></div>
-            <!-- v0.2 任务：告警总数。链路接通后把 -- 换成真数据 -->
-            <div class="kpi hot"><b id="告警数">--</b><span>告警总数</span></div>
+            <div class="kpi"><b id="kpiOutage">--</b><span>全网退服总数</span></div>
+            <div class="kpi"><b id="kpiCities">--</b><span>覆盖地市</span></div>
+            <div class="kpi hot"><b id="kpiAlarms">--</b><span>告警总数</span></div>
           </div>
         </div>
       </section>
       <section class="panel" style="flex:1">
         <div class="p-hd"><i class="tick"></i><b>处置工单</b><span class="en">TICKETS</span></div>
-        <div class="p-bd" style="overflow-y:auto"><div id="工单区"></div></div>
+        <div class="p-bd" style="overflow-y:auto"><div id="ticketList"></div></div>
       </section>
     </div>
 
@@ -149,7 +148,7 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
       <section class="panel" style="flex:1">
         <div class="p-hd"><i class="tick"></i><b>地市退服分布</b><span class="en">CITY OUTAGE</span></div>
         <div class="p-bd" style="display:flex;flex-direction:column">
-          <div class="bars" id="城市条形"></div>
+          <div class="bars" id="cityBars"></div>
           <div class="legend"><span><i class="g4"></i>4G</span><span><i class="g5"></i>5G</span></div>
         </div>
       </section>
@@ -160,15 +159,15 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
       <section class="panel" style="flex:1">
         <div class="p-hd"><i class="tick"></i><b>智能诊断</b><span class="en">DIAGNOSIS AGENT</span></div>
         <div class="p-bd" style="display:flex;flex-direction:column">
-          <div class="chat-log" id="对话区">
+          <div class="chat-log" id="chatLog">
             <div class="msg agent">我是网络诊断 Agent，可基于实时数据回答。试试：
 · 现在全网状况如何？
 · 苏州的情况需要关注吗？
 · 哪个地市 4G 问题最突出？</div>
           </div>
           <div class="chat-input">
-            <input id="问题框" placeholder="输入运维问题，回车或点击诊断">
-            <button id="发送钮">诊断</button>
+            <input id="questionInput" placeholder="输入运维问题，回车或点击诊断">
+            <button id="sendBtn">诊断</button>
           </div>
         </div>
       </section>
@@ -178,125 +177,123 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 
 <script>
 /* ---- 舞台缩放：按窗口大小等比缩放 1920x1080 设计稿 ---- */
-function 适配舞台(){
-  const 比例 = Math.min(innerWidth/1920, innerHeight/1080);
-  document.getElementById("stage").style.transform = `translate(-50%,-50%) scale(${比例.toFixed(4)})`;
+function fitStage(){
+  const scale = Math.min(innerWidth/1920, innerHeight/1080);
+  document.getElementById("stage").style.transform = `translate(-50%,-50%) scale(${scale.toFixed(4)})`;
 }
 
 /* ---- 顶栏时钟 ---- */
-function 走时(){
-  const d = new Date(), p = n => String(n).padStart(2,"0");
-  document.getElementById("时钟").textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  document.getElementById("日期").textContent =
-    `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} 星期${"日一二三四五六"[d.getDay()]}`;
+function tickClock(){
+  const d = new Date(), pad = n => String(n).padStart(2,"0");
+  document.getElementById("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  document.getElementById("dateText").textContent =
+    `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} 星期${"日一二三四五六"[d.getDay()]}`;
 }
 
-/* ---- 取数并展示：与 v0.1 完全相同的三步（取数 → 解析 → 填入） ---- */
-async function 取数并展示(){
-  const 应答 = await fetch("/api/kpi");
-  const 数据 = await 应答.json();
-  document.getElementById("总数").textContent   = 数据.outage_total;
-  document.getElementById("地市数").textContent = 数据.city_count;
-  document.getElementById("告警数").textContent = 数据.alarm_total;
+/* ---- KPI：取数 → 解析 → 填入 ---- */
+async function renderKpi(){
+  const data = await (await fetch("/api/kpi")).json();
+  document.getElementById("kpiOutage").textContent = data.outage_total;
+  document.getElementById("kpiCities").textContent = data.city_count;
+  document.getElementById("kpiAlarms").textContent = data.alarm_total;
 }
 
 /* ---- 地市退服条形图：明细列表 → 按最大值归一化的分段条 ---- */
-async function 取地市退服并展示(){
-  const 应答 = await fetch("/api/city-outage");
-  const 数据 = await 应答.json();
-  const 城市们 = 数据.cities;                                  // 服务端已按 total 降序
-  const 最大 = Math.max(...城市们.map(城 => 城.total));         // 用最大值做宽度基准
-  document.getElementById("城市条形").innerHTML = 城市们.map(城 => {
-    const 段 = Object.entries(城.by_tech).map(([专业, 值]) =>
-      `<div class="seg ${专业 === "4G" ? "g4" : "g5"}"
-            style="width:${(值/最大*100).toFixed(1)}%"
-            title="${城.city} ${专业}：${值}"></div>`).join("");
+async function renderCityBars(){
+  const data = await (await fetch("/api/city-outage")).json();
+  const cities = data.cities;                                  // 服务端已按 total 降序
+  const max = Math.max(...cities.map(c => c.total));           // 用最大值做宽度基准
+  document.getElementById("cityBars").innerHTML = cities.map(c => {
+    const segments = Object.entries(c.by_tech).map(([tech, value]) =>
+      `<div class="seg ${tech === "4G" ? "g4" : "g5"}"
+            style="width:${(value/max*100).toFixed(1)}%"
+            title="${c.city} ${tech}：${value}"></div>`).join("");
     return `<div class="crow">
-      <span class="name">${城.city}</span>
-      <div class="track">${段}</div>
-      <b class="val">${城.total}</b>
+      <span class="name">${c.city}</span>
+      <div class="track">${segments}</div>
+      <b class="val">${c.total}</b>
     </div>`;
   }).join("");
 }
 
-/* ---- Agent 诊断对话：提问 → 展示工具调用轨迹 → 展示结论 ---- */
-function 加消息(类别, 文字){
-  const 区 = document.getElementById("对话区");
-  const 条 = document.createElement("div");
-  条.className = "msg " + 类别;
-  条.textContent = 文字;
-  区.appendChild(条);
-  区.scrollTop = 区.scrollHeight;
-  return 条;
-}
-
-const 会话ID = "web-" + Math.random().toString(36).slice(2);   // 每次打开大屏 = 一个新会话
-
-async function 发起诊断(){
-  const 框 = document.getElementById("问题框"), 钮 = document.getElementById("发送钮");
-  const 问题 = 框.value.trim();
-  if (!问题 || 钮.disabled) return;
-  框.value = "";
-  加消息("user", 问题);
-  钮.disabled = true; 钮.textContent = "诊断中";
-  let 答案条 = null;
-  try {
-    /* SSE 流式：事件一到就渲染——工具轨迹实时出现，答案逐字打出 */
-    const 应答 = await fetch("/api/agent/stream", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({question: 问题, session_id: 会话ID}),
-    });
-    const 读者 = 应答.body.getReader();
-    const 解码器 = new TextDecoder();
-    let 缓冲 = "";
-    while (true) {
-      const {done, value} = await 读者.read();
-      if (done) break;
-      缓冲 += 解码器.decode(value, {stream: true});
-      let 界;
-      while ((界 = 缓冲.indexOf("\n\n")) >= 0) {        /* SSE 消息以空行分隔 */
-        const 行 = 缓冲.slice(0, 界); 缓冲 = 缓冲.slice(界 + 2);
-        if (!行.startsWith("data: ")) continue;
-        const 事 = JSON.parse(行.slice(6));
-        if (事.事件 === "工具") {
-          加消息("trace", `[工具] ${事.工具} ${事.参数} → ${事.摘要}`);
-        } else if (事.事件 === "文字") {
-          if (!答案条) 答案条 = 加消息("agent", "");
-          答案条.textContent += 事.文本;
-          答案条.parentElement.scrollTop = 答案条.parentElement.scrollHeight;
-        } else if (事.事件 === "错误") {
-          加消息("agent", "出错了：" + 事.信息);
-        }
-      }
-    }
-  } catch (错) {
-    加消息("agent", "请求失败：" + 错);
-  }
-  钮.disabled = false; 钮.textContent = "诊断";
-}
-
-document.getElementById("发送钮").addEventListener("click", 发起诊断);
-document.getElementById("问题框").addEventListener("keydown", e => { if (e.key === "Enter") 发起诊断(); });
-
-适配舞台(); addEventListener("resize", 适配舞台);
-走时(); setInterval(走时, 1000);
 /* ---- 处置工单列表：Agent 建的单实时出现在这里 ---- */
-async function 取工单并展示(){
-  const 数据 = await (await fetch("/api/tickets")).json();
-  document.getElementById("工单区").innerHTML = 数据.tickets.length
-    ? 数据.tickets.map(单 => `
+async function renderTickets(){
+  const data = await (await fetch("/api/tickets")).json();
+  document.getElementById("ticketList").innerHTML = data.tickets.length
+    ? data.tickets.map(t => `
       <div class="ticket">
-        <div class="t-top"><b>#${单.id} ${单.地市}</b><span class="t-status">${单.状态}</span></div>
-        <div class="t-body">${单.故障摘要}</div>
-        <div class="t-meta">${单.创建时间} · 时限 ${单.时限小时} 小时 · 来源 ${单.来源}</div>
+        <div class="t-top"><b>#${t.id} ${t.city}</b><span class="t-status">${t.status}</span></div>
+        <div class="t-body">${t.summary}</div>
+        <div class="t-meta">${t.created_at} · 时限 ${t.deadline_hours} 小时 · 来源 ${t.source}</div>
       </div>`).join("")
     : '<div class="placeholder"><b>暂 无 工 单</b><span>可在右侧要求 Agent 建单</span></div>';
 }
 
-取数并展示(); setInterval(取数并展示, 5000);
-取地市退服并展示(); setInterval(取地市退服并展示, 5000);
-取工单并展示(); setInterval(取工单并展示, 5000);
+/* ---- Agent 诊断对话：提问 → 工具轨迹实时出现 → 答案逐字打出 ---- */
+function appendMessage(kind, text){
+  const log = document.getElementById("chatLog");
+  const node = document.createElement("div");
+  node.className = "msg " + kind;
+  node.textContent = text;
+  log.appendChild(node);
+  log.scrollTop = log.scrollHeight;
+  return node;
+}
+
+const SESSION_ID = "web-" + Math.random().toString(36).slice(2);   // 每次打开大屏 = 一个新会话
+
+async function sendDiagnosis(){
+  const input = document.getElementById("questionInput"), btn = document.getElementById("sendBtn");
+  const question = input.value.trim();
+  if (!question || btn.disabled) return;
+  input.value = "";
+  appendMessage("user", question);
+  btn.disabled = true; btn.textContent = "诊断中";
+  let answerNode = null;
+  try {
+    /* SSE 流式：事件一到就渲染 */
+    const response = await fetch("/api/agent/stream", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({question, session_id: SESSION_ID}),
+    });
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      let boundary;
+      while ((boundary = buffer.indexOf("\n\n")) >= 0) {        /* SSE 消息以空行分隔 */
+        const line = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2);
+        if (!line.startsWith("data: ")) continue;
+        const ev = JSON.parse(line.slice(6));
+        if (ev.event === "tool") {
+          appendMessage("trace", `[工具] ${ev.tool} ${ev.args} → ${ev.summary}`);
+        } else if (ev.event === "text") {
+          if (!answerNode) answerNode = appendMessage("agent", "");
+          answerNode.textContent += ev.text;
+          answerNode.parentElement.scrollTop = answerNode.parentElement.scrollHeight;
+        } else if (ev.event === "error") {
+          appendMessage("agent", "出错了：" + ev.message);
+        }
+      }
+    }
+  } catch (err) {
+    appendMessage("agent", "请求失败：" + err);
+  }
+  btn.disabled = false; btn.textContent = "诊断";
+}
+
+document.getElementById("sendBtn").addEventListener("click", sendDiagnosis);
+document.getElementById("questionInput").addEventListener("keydown", e => { if (e.key === "Enter") sendDiagnosis(); });
+
+fitStage(); addEventListener("resize", fitStage);
+tickClock(); setInterval(tickClock, 1000);
+renderKpi(); setInterval(renderKpi, 5000);
+renderCityBars(); setInterval(renderCityBars, 5000);
+renderTickets(); setInterval(renderTickets, 5000);
 </script>
 </body>
 </html>

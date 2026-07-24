@@ -1,6 +1,6 @@
 # 手写 Agent 循环
 
-**范围说明**：本文基于 `agent.py` 与 `prompts/agent.txt` 的实现及一次真实运行记录。这是本仓库最核心的一篇笔记：不借助任何框架，Agent 的全部机制都在约 100 行代码里，每个环节都可指认。
+**范围说明**：本文基于 `noc_agent/agent/loop.py` 与 `prompts/agent.txt` 的实现及一次真实运行记录。这是本仓库最核心的一篇笔记：不借助任何框架，Agent 的全部机制都在约 100 行代码里，每个环节都可指认。
 
 ## 1. 定义
 
@@ -12,7 +12,7 @@
 
 ## 2. 循环结构
 
-`agent.py` 的 `运行Agent()`，逻辑可压缩为：
+`noc_agent/agent/loop.py` 的 `run_agent()`，逻辑可压缩为：
 
 ```
 messages = [system, user]
@@ -44,7 +44,7 @@ messages = [system, user]
 
 ```
 发送前2条:  [system, user]
-第1轮模型返回: assistant, tool_calls=[查全网概览, 查地市退服明细]   ← 一轮可以要求多个调用
+第1轮模型返回: assistant, tool_calls=[get_network_overview, get_city_outages]   ← 一轮可以要求多个调用
 执行后追加3条: assistant(原样入史) + tool(概览结果) + tool(明细结果)
 第2轮发送6条:  [system, user, assistant, tool, tool] → 模型返回纯 content，循环结束
 ```
@@ -60,7 +60,7 @@ messages = [system, user]
 
 ## 5. 工具定义：LLM 只看得见说明书
 
-`工具表` 中每个工具暴露给模型的只有 `name`、`description` 和参数 schema——模型看不见函数代码。因此 **description 的质量直接决定模型选工具的准确率**。本项目的写法把返回字段名也写进说明（如 `outage_total`），模型在答案中引用字段值时不会张冠李戴。
+`TOOL_REGISTRY` 中每个工具暴露给模型的只有 `name`、`description` 和参数 schema——模型看不见函数代码。因此 **description 的质量直接决定模型选工具的准确率**。本项目的写法把返回字段名也写进说明（如 `outage_total`），模型在答案中引用字段值时不会张冠李戴。
 
 另一处细节：模型若要求调用不存在的工具，不抛异常中断，而是把 `{"error": "未知工具"}` 作为工具结果回填——让模型看到错误并自行纠正，循环得以继续。
 
@@ -78,7 +78,7 @@ messages = [system, user]
 |--------|------------------|
 | `messages` 列表 | State |
 | 循环体 | Node 与 Edge（条件跳转） |
-| `工具表` / `工具清单()` | Tool 定义 |
+| `TOOL_REGISTRY` / `tool_specs()` | Tool 定义 |
 | 终止条件① | 指向 END 的边 |
 
 先掌握左列，再看右列，即可理解框架封装了什么、为什么存在。
@@ -87,7 +87,7 @@ messages = [system, user]
 
 ```bash
 # 前提：8001、8002 两个服务在运行
-python3 agent.py "现在全网状况如何？哪个地市最需要关注？"
+python3 -m noc_agent.agent.loop "现在全网状况如何？哪个地市最需要关注？"
 ```
 
 预期：打印每轮的工具调用与返回摘要，最终输出含真实数字的诊断结论。
@@ -97,7 +97,7 @@ python3 agent.py "现在全网状况如何？哪个地市最需要关注？"
 ## 自测
 
 1. 把两个工具的 `description` 互换（代码与函数不动），再问同样的问题，会发生什么？为什么？
-2. 执行工具后如果忘记追加 `role="tool"` 的消息（或 `tool_call_id` 写错），下一轮请求会发生什么？
+2. execute_tool后如果忘记追加 `role="tool"` 的消息（或 `tool_call_id` 写错），下一轮请求会发生什么？
 3. 删去最大轮数保护，什么情况下程序永远不会结束？该情况下每一轮的成本是多少？
 
 建议实际修改代码验证，验证后执行 `git checkout -- <文件名>` 恢复。

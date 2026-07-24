@@ -38,11 +38,11 @@
 | 测试对象 | 手法 |
 |---------|------|
 | NOC 后端信封格式 | FastAPI `TestClient`——不起服务直接测接口 |
-| `全网汇总` 聚合逻辑 | 纯函数直接断言 |
+| `aggregate` 聚合逻辑 | 纯函数直接断言 |
 | `/api/kpi` 契约、未知地市错误 | `monkeypatch` 替换 `requests.get`，切断对下游的依赖 |
-| RAG 切分、工具清单格式、防御式执行 | 纯函数直接断言 |
+| RAG 切分、tool_specs格式、防御式执行 | 纯函数直接断言 |
 
-原则：**优先把逻辑写成纯函数，测试就便宜**。`全网汇总` 当初从路由函数里抽出来（见 [data-pipeline.md](data-pipeline.md)），此刻兑现了第二份红利。
+原则：**优先把逻辑写成纯函数，测试就便宜**。`aggregate` 当初从路由函数里抽出来（见 [data-pipeline.md](data-pipeline.md)），此刻兑现了第二份红利。
 
 慢而不稳定的部分（真实调 LLM）不放在 pytest 里，由评测脚本单独覆盖（见 [../05-agent-platform/agent-eval.md](../05-agent-platform/agent-eval.md)）。
 

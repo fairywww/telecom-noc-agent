@@ -1,6 +1,6 @@
 # 新增一个指标：三层改动与前后端契约
 
-**范围说明**：本文基于 v0.2 中"告警总数"指标的接入过程，涉及 `noc_backend.py`、`adapter.py`、`index.html` 三个文件。目标是回答一个通用问题：**大屏上要多显示一个数字，系统里要动哪些地方，为什么是这些地方。**
+**范围说明**：本文基于 v0.2 中"告警总数"指标的接入过程，涉及 `noc_agent/server/noc_mock.py`、`noc_agent/server/adapter.py`、`web/index.html` 三个文件。目标是回答一个通用问题：**大屏上要多显示一个数字，系统里要动哪些地方，为什么是这些地方。**
 
 ## 1. 结论先行
 
@@ -8,15 +8,15 @@
 
 | 层 | 文件 | 本次改动 | 职责 |
 |----|------|---------|------|
-| 数据层 | `noc_backend.py` | 每个专业数据中增加 `alarm_count` 字段 | 提供原始数据 |
-| 适配层 | `adapter.py` | 聚合 `alarm_count`，应答中增加 `alarm_total` 字段 | 原始数据 → 前端可用格式 |
-| 展示层 | `index.html` | 将 `alarm_total` 填入 `id="告警数"` 的元素 | 取数、填入页面 |
+| 数据层 | `noc_agent/server/noc_mock.py` | 每个专业数据中增加 `alarm_count` 字段 | 提供原始数据 |
+| 适配层 | `noc_agent/server/adapter.py` | 聚合 `alarm_count`，应答中增加 `alarm_total` 字段 | 原始数据 → 前端可用格式 |
+| 展示层 | `web/index.html` | 将 `alarm_total` 填入 `id="告警数"` 的元素 | 取数、填入页面 |
 
 三层通过 HTTP 接口衔接，互相只依赖**字段名**，不依赖对方的内部实现。
 
 ## 2. 数据层：字段扩展
 
-`noc_backend.py` 第 18–22 行，在每个专业的数据字典中并列增加一个键：
+`noc_agent/server/noc_mock.py` 第 18–22 行，在每个专业的数据字典中并列增加一个键：
 
 ```python
 "南京": {"4G": {"outage_count": 40, "alarm_count": 120}, ...}
@@ -28,10 +28,10 @@
 
 ### 3.1 改动内容
 
-`adapter.py` 原先只对 `outage_count` 加总，加总逻辑内联写在路由函数中。本次将其抽取为独立函数（`adapter.py` 第 24–34 行）：
+`noc_agent/server/adapter.py` 原先只对 `outage_count` 加总，加总逻辑内联写在路由函数中。本次将其抽取为独立函数（`noc_agent/server/adapter.py` 第 24–34 行）：
 
 ```python
-def 全网汇总(行, 字段名):
+def aggregate(行, 字段名):
     return sum(
         专业数据[字段名]
         for 各专业 in 行.values()          # 遍历每个地市
@@ -43,8 +43,8 @@ def 全网汇总(行, 字段名):
 
 ```python
 return {
-    "outage_total": 全网汇总(行, "outage_count"),
-    "alarm_total": 全网汇总(行, "alarm_count"),
+    "outage_total": aggregate(行, "outage_count"),
+    "alarm_total": aggregate(行, "alarm_count"),
     "city_count": len(行),
 }
 ```
@@ -93,7 +93,7 @@ for 各专业 in 行.values():        # {"4G": {...}, "5G": {...}}
 
 其中 477 = 120 + 86 + 95 + 71 + 63 + 42，与数据层手工求和一致，证明聚合逻辑正确。
 
-注意：uvicorn 默认不监视代码变更，修改 `.py` 文件后需重启服务才生效（开发期可使用 `--reload` 参数开启自动重载）；`index.html` 由静态文件托管，刷新浏览器即生效。
+注意：uvicorn 默认不监视代码变更，修改 `.py` 文件后需重启服务才生效（开发期可使用 `--reload` 参数开启自动重载）；`web/index.html` 由静态文件托管，刷新浏览器即生效。
 
 ---
 
@@ -101,6 +101,6 @@ for 各专业 in 行.values():        # {"4G": {...}, "5G": {...}}
 
 1. 若前端改为显示"平均每地市告警数"，三层中哪几层需要改动？哪一层完全不用动？
 2. 将应答字段 `alarm_total` 改名为 `alarms`，属于破坏性还是非破坏性变更？会发生什么？
-3. `全网汇总(行, "alarm_count")` 中如果某个专业的数据缺少 `alarm_count` 键，这行代码会发生什么？（提示：实际构造一个缺键的数据试一次）
+3. `aggregate(行, "alarm_count")` 中如果某个专业的数据缺少 `alarm_count` 键，这行代码会发生什么？（提示：实际构造一个缺键的数据试一次）
 
 建议实际修改代码验证，验证后执行 `git checkout -- <文件名>` 恢复。

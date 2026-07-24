@@ -23,3 +23,23 @@
 | [06 通信行业 Agent](06-telecom-agent/) | 故障诊断、工单、优化建议 | 最终形态 | 进行中 |
 
 阶段划分是知识的组织方式，不是严格的时间顺序：项目推进到哪一部分，就在对应阶段沉淀笔记。
+
+## 重构对照（v1.4）
+
+v1.4 将扁平模块重构为 `noc_agent/` 分层包并将标识符英文化。笔记中的文件路径与标识符已同步更新；**笔记内的行号与部分代码摘录反映写作当时的版本**，与现行代码存在差异时以代码为准。历史版本可经 git 标签/提交回看。
+
+| 原模块 | 现模块 | 核心标识符（旧 → 新） |
+|--------|--------|---------------------|
+| agent.py | noc_agent/agent/loop.py | 运行Agent流 → run_agent_stream，运行Agent → run_agent |
+| tools.py | noc_agent/agent/tools.py | 工具表 → TOOL_REGISTRY，执行工具 → execute_tool，工具清单 → tool_specs |
+| conversation.py | noc_agent/agent/memory.py | 会话 → Session，取会话 → get_session |
+| multi_agent.py | noc_agent/agent/orchestrator.py | 运行总控 → run_orchestrator，建专家 → build_expert |
+| rag.py | noc_agent/rag/retrieval.py | 检索 → search，向量化 → embed，切分知识库 → load_chunks |
+| adapter.py | noc_agent/server/adapter.py | 全网汇总 → aggregate |
+| noc_backend.py | noc_agent/server/noc_mock.py | 数据库里的行 → MOCK_ROWS |
+| tickets.py | noc_agent/storage/tickets.py | 创建工单 → create_ticket，工单列表 → list_tickets |
+| mcp_server.py | noc_agent/mcp/server.py | 处理 → handle，应答 → respond |
+| llm.py | noc_agent/llm.py | 问大模型 → ask，客户端 → client，模型名 → MODEL |
+| index.html | web/index.html | 事件字段 事件/文字/工具 → event/text/tool |
+
+工具名（模型可见）：查全网概览 → get_network_overview，查地市退服明细 → get_city_outages，查指定地市明细 → get_city_detail，查运维知识 → search_ops_knowledge，创建处置工单 → create_ticket。

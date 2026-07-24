@@ -1,23 +1,23 @@
 # LangGraph 对比：同一个 Agent 的两种写法
 
-**范围说明**：本文对照 `agent.py`（手写循环）与 `langgraph_agent.py`（LangGraph 0.6 重写版）。两者行为一致（同一模型、同一提示词、同一批工具，实测同题给出相同结论与引用）。前置阅读：[agent-loop.md](agent-loop.md)。
+**范围说明**：本文对照 `noc_agent/agent/loop.py`（手写循环）与 `examples/langgraph_agent.py`（LangGraph 0.6 重写版）。两者行为一致（同一模型、同一提示词、同一批工具，实测同题给出相同结论与引用）。前置阅读：[agent-loop.md](agent-loop.md)。
 
 ## 1. 逐概念对照
 
-| 手写版（agent.py） | LangGraph 版 | 说明 |
+| 手写版（noc_agent/agent/loop.py） | LangGraph 版 | 说明 |
 |-------------------|--------------|------|
 | `messages` 列表 | `MessagesState` | 框架的 State 就是我们那份消息列表加自动追加逻辑 |
 | `for 轮 in range(最大轮数)` + `if not tool_calls` | 节点 + 条件边（`add_conditional_edges`） | 循环被"画"成图：推理节点 → 判断 → 工具节点 → 回到推理 |
-| `工具表` + `执行工具()` + 手拼 tool 消息 | `ToolNode(工具们)` | 框架代办：执行函数、包装 `ToolMessage`、回填 State |
+| `TOOL_REGISTRY` + `execute_tool()` + 手拼 tool 消息 | `ToolNode(工具们)` | 框架代办：执行函数、包装 `ToolMessage`、回填 State |
 | 手写 JSON Schema | `@tool` 装饰器 | schema 从函数签名与 docstring 自动生成——docstring 就是给模型看的说明书 |
 | `最大轮数=8` | `recursion_limit=16` | 语义略不同：手写版数"轮"，框架数"节点步"（一轮 = 推理+工具两步） |
 | 空应答重试、错误回填 | **默认没有** | 我们的可靠性逻辑框架不自带，需自行在节点内实现 |
 
-核心结论：**LangGraph 没有引入任何手写版之外的新概念**，它把循环声明成图、把消息管理收进 State。先写过 `agent.py` 的人读 `langgraph_agent.py`，每一行都能指出对应物。
+核心结论：**LangGraph 没有引入任何手写版之外的新概念**，它把循环声明成图、把消息管理收进 State。先写过 `noc_agent/agent/loop.py` 的人读 `examples/langgraph_agent.py`，每一行都能指出对应物。
 
 ## 2. 代码量与复杂度
 
-手写版循环层约 90 行，框架版约 60 行——差距不大。因为 Agent 的复杂度本来就不在循环骨架，而在工具设计、提示词与错误处理；这部分两种写法完全相同（框架版直接复用 `tools.py` 的函数与 `prompts/agent.txt`）。
+手写版循环层约 90 行，框架版约 60 行——差距不大。因为 Agent 的复杂度本来就不在循环骨架，而在工具设计、提示词与错误处理；这部分两种写法完全相同（框架版直接复用 `noc_agent/agent/tools.py` 的函数与 `prompts/agent.txt`）。
 
 ## 3. 框架真正的附加值（手写版没有的）
 
@@ -25,7 +25,7 @@
 
 - **Checkpointer 持久化**：State 可存入 SQLite/Postgres，对话断点续跑、失败重放——我们的会话表（[memory.md](memory.md)）是进程内存，重启即失；
 - **Human-in-the-loop**：在任意边上设中断点，等人工审批后继续（运维场景的"高危操作需确认"直接对应）；
-- **子图与并行**：多 Agent 编排声明式表达，支持并行分支——我们的 multi_agent.py 是串行咨询；
+- **子图与并行**：多 Agent 编排声明式表达，支持并行分支——我们的 noc_agent/agent/orchestrator.py 是串行咨询；
 - **可观测生态**：LangSmith 全链路追踪，逐节点看输入输出。
 
 ## 4. 框架的代价
@@ -49,10 +49,10 @@
 
 ```bash
 pip install -r requirements-optional.txt
-python3 langgraph_agent.py "哪个地市最需要关注？按规范该怎么办？"
+python3 examples/langgraph_agent.py "哪个地市最需要关注？按规范该怎么办？"
 ```
 
-预期：与 `python3 agent.py` 同题行为一致（调用概览、明细、知识库，给出批量退服判定与规范引用）。
+预期：与 `python3 -m noc_agent.agent.loop` 同题行为一致（调用概览、明细、知识库，给出批量退服判定与规范引用）。
 
 ---
 

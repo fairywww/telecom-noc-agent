@@ -46,7 +46,7 @@ Dockerfile 解决"单个环境如何构建"，compose 解决"多个服务如何�
 services:
   noc-backend:
     build: .                                     # 用本目录 Dockerfile 构建
-    command: python3 -m uvicorn noc_backend:app --host 0.0.0.0 --port 8001
+    command: python3 -m uvicorn noc_agent.server.noc_mock:app --host 0.0.0.0 --port 8001
     ports: ["8001:8001"]
   adapter:
     build: .
@@ -63,7 +63,7 @@ services:
 
 `docker compose up` 自动创建一个虚拟网络，每个容器在网络内的主机名即服务名。因此 adapter 访问数据源写 `http://noc-backend:8001`。
 
-**关键认知：容器内的 localhost 指容器自身**，不是宿主机，也不是别的容器。这是初学 Docker 最常见的错误来源。本仓库的对应改造：`adapter.py` 的 NOC 地址改为环境变量 `NOC_URL` 注入——本机直跑时默认 `localhost:8001`，容器内注入服务名，同一份代码适配两种环境。
+**关键认知：容器内的 localhost 指容器自身**，不是宿主机，也不是别的容器。这是初学 Docker 最常见的错误来源。本仓库的对应改造：`noc_agent/server/adapter.py` 的 NOC 地址改为环境变量 `NOC_URL` 注入——本机直跑时默认 `localhost:8001`，容器内注入服务名，同一份代码适配两种环境。
 
 ### 3.2 端口映射
 
@@ -107,7 +107,7 @@ docker compose up --build         # 首次构建约 1–3 分钟
 
 三个验证实验，各对应一个核心概念：
 
-1. **分层缓存**：build 一次后修改一行 `index.html` 再 build，观察 pip install 层显示 `CACHED`；
+1. **分层缓存**：build 一次后修改一行 `web/index.html` 再 build，观察 pip install 层显示 `CACHED`；
 2. **密钥路径**：`docker compose exec adapter ls -la /app` 应看不到 `.env`（构建期被挡）；`docker compose exec adapter env | grep LLM` 应看到密钥（运行期注入）；
 3. **环境隔离**：`docker compose exec adapter python3 --version` 输出 3.11，宿主机为 3.9。
 

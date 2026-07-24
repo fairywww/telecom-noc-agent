@@ -1,6 +1,6 @@
 # FastAPI 基础
 
-**范围说明**：本文只涵盖本仓库 v0.1 代码（`noc_backend.py`、`adapter.py`）实际使用到的 FastAPI 特性。每节先给出定义，再对照仓库中的代码进行说明。未使用的特性统一列于第 7 节，待项目用到时补充。
+**范围说明**：本文只涵盖本仓库 v0.1 代码（`noc_agent/server/noc_mock.py`、`noc_agent/server/adapter.py`）实际使用到的 FastAPI 特性。每节先给出定义，再对照仓库中的代码进行说明。未使用的特性统一列于第 7 节，待项目用到时补充。
 
 ## 1. 概述
 
@@ -14,8 +14,8 @@ FastAPI 是基于 Python 类型注解的 Web 框架，核心职责有三项：
 
 | 文件 | 职责 | 端口 |
 |------|------|------|
-| `noc_backend.py` | 模拟 NOC 系统，提供原始数据接口 | 8001 |
-| `adapter.py` | 适配层：聚合数据、托管前端页面 | 8002 |
+| `noc_agent/server/noc_mock.py` | 模拟 NOC 系统，提供原始数据接口 | 8001 |
+| `noc_agent/server/adapter.py` | 适配层：聚合数据、托管前端页面 | 8002 |
 
 ## 2. 应用对象与路由注册
 
@@ -30,7 +30,7 @@ app = FastAPI()
 
 ### 2.2 使用装饰器注册路由
 
-`noc_backend.py` 第 25–28 行：
+`noc_agent/server/noc_mock.py` 第 25–28 行：
 
 ```python
 @app.get("/api/statistics/all")
@@ -54,13 +54,13 @@ FastAPI 本身不包含网络服务器，只定义请求的处理逻辑。监听
 启动命令及其构成：
 
 ```bash
-python3 -m uvicorn noc_backend:app --port 8001
+python3 -m uvicorn noc_agent.server.noc_mock:app --port 8001
 ```
 
 | 片段 | 含义 |
 |------|------|
 | `python3 -m uvicorn` | 以模块方式运行 uvicorn |
-| `noc_backend` | 模块名，即文件 `noc_backend.py` |
+| `noc_backend` | 模块名，即文件 `noc_agent/server/noc_mock.py` |
 | `app` | 该模块中 FastAPI 实例的变量名 |
 | `--port 8001` | 监听端口 |
 
@@ -68,22 +68,22 @@ python3 -m uvicorn noc_backend:app --port 8001
 
 ## 4. 同一程序中的服务端与客户端角色
 
-`adapter.py` 在通信中同时处于两种角色：
+`noc_agent/server/adapter.py` 在通信中同时处于两种角色：
 
-- **服务端**：通过 `@app.get("/api/kpi")` 接收来自浏览器的请求（`adapter.py` 第 24 行）；
-- **客户端**：通过 `requests.get()` 向 NOC 后端发起请求（`adapter.py` 第 27 行）。
+- **服务端**：通过 `@app.get("/api/kpi")` 接收来自浏览器的请求（`noc_agent/server/adapter.py` 第 24 行）；
+- **客户端**：通过 `requests.get()` 向 NOC 后端发起请求（`noc_agent/server/adapter.py` 第 27 行）。
 
 `requests` 是 HTTP 客户端库，用于主动发起请求；FastAPI 是服务端框架，用于接收并处理请求。二者方向相反，在同一程序中并存互不冲突。
 
 ## 5. 静态文件托管与路由匹配顺序
 
-`adapter.py` 第 42 行：
+`noc_agent/server/adapter.py` 第 42 行：
 
 ```python
 app.mount("/", StaticFiles(directory=str(Path(__file__).parent), html=True))
 ```
 
-作用：将指定目录挂载到根路径 `/`，使其中的文件可通过 HTTP 直接访问。参数 `html=True` 表示访问目录路径时返回该目录下的 `index.html`。
+作用：将指定目录挂载到根路径 `/`，使其中的文件可通过 HTTP 直接访问。参数 `html=True` 表示访问目录路径时返回该目录下的 `web/index.html`。
 
 **注意事项**：FastAPI 按注册顺序匹配请求路径。`mount("/")` 会匹配所有未被更早规则处理的路径，因此该语句必须置于全部 API 路由注册**之后**。若将其置于 `@app.get("/api/kpi")` 之前，对 `/api/kpi` 的请求将被静态文件处理器先行拦截，因目录中不存在名为 `api/kpi` 的文件而返回 404。
 
@@ -109,7 +109,7 @@ FastAPI 根据已注册的路由自动生成 OpenAPI 规范，并内置两个文
 
 ## 自测
 
-1. 将 `noc_backend.py` 中的 `@app.get` 改为 `@app.post` 后，用浏览器直接访问该地址，会得到什么结果？原因是什么？
+1. 将 `noc_agent/server/noc_mock.py` 中的 `@app.get` 改为 `@app.post` 后，用浏览器直接访问该地址，会得到什么结果？原因是什么？
 2. `requests.get` 与 `@app.get` 分别工作在通信的哪一端？各自的职责是什么？
 3. 将 `app.mount("/", ...)` 移到 `@app.get("/api/kpi")` 之前，前端页面与 KPI 接口分别会出现什么现象？
 

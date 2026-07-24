@@ -65,8 +65,8 @@ python3 -m venv .venv && source .venv/bin/activate
 make install                       # 或 pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env               # 填入 LLM_API_KEY（ModelScope 免费额度即可）
 
-make run-noc                       # 终端 1：模拟 NOC 数据源
-make run-adapter                   # 终端 2：大屏后端
+make run-noc                       # 终端 1：python3 -m uvicorn noc_agent.server.noc_mock:app --port 8001
+make run-adapter                   # 终端 2：python3 -m uvicorn noc_agent.server.adapter:app --port 8002
 ```
 
 浏览器打开 http://localhost:8002 。未配置密钥时数据大屏正常工作，仅智能诊断需要 LLM。
@@ -80,40 +80,42 @@ docker compose up --build
 命令行使用：
 
 ```bash
-python3 agent.py "南京退服全网最多，按规范该怎么处置？"     # 单次诊断
-python3 conversation.py                                    # 多轮对话
-python3 multi_agent.py "南京情况多严重？按规范怎么处置？"   # 多 Agent 编排
+python3 -m noc_agent.agent.loop "南京退服全网最多，按规范该怎么处置？"       # 单次诊断
+python3 -m noc_agent.agent.memory                                           # 多轮对话
+python3 -m noc_agent.agent.orchestrator "南京情况多严重？按规范怎么处置？"   # 多 Agent 编排
 ```
 
 ## 项目结构
 
 ```
 telecom-noc-agent/
-├── noc_backend.py       # 模拟 NOC 数据源（对接真实系统时整体替换）
-├── adapter.py           # 大屏后端：数据接口 / SSE 诊断流 / 工单接口 / 静态托管
-├── llm.py               # OpenAI 兼容 LLM 客户端（流式、推理模型、.env 注入）
-├── tools.py             # 工具层：4 读 + 1 写，Agent 循环与 MCP Server 共用
-├── agent.py             # 手写 Agent 循环（单一流式生成器，三种消费方式）
-├── conversation.py      # 多轮会话与滚动摘要记忆
-├── multi_agent.py       # 总控 + 专家子 Agent 编排
-├── rag.py               # RAG：切分 / Embedding / 余弦检索
-├── tickets.py           # 工单存储：SQLite、幂等保护、审计字段
-├── mcp_server.py        # 手写 MCP Server（JSON-RPC 2.0 / stdio）
-├── langgraph_agent.py   # LangGraph 对照实现（可选依赖）
-├── eval.py              # Agent 评测集
-├── index.html           # 监控大屏（原生 HTML/JS，零前端依赖）
-├── prompts/             # 提示词：人设与行为规则
-├── data/knowledge/      # 运维规范知识库（演示文档，自编通用内容）
-├── notes/               # 19 篇技术笔记（按六阶段知识地图组织）
-└── tests/               # 16 项单元测试（零网络依赖）
+├── noc_agent/                  # 主包
+│   ├── config.py               #   路径与环境变量（.env 注入）
+│   ├── llm.py                  #   OpenAI 兼容 LLM 客户端（流式、推理模型）
+│   ├── agent/
+│   │   ├── loop.py             #   手写 Agent 循环（单一流式生成器）
+│   │   ├── tools.py            #   工具层：4 读 + 1 写，循环与 MCP 共用
+│   │   ├── memory.py           #   多轮会话与滚动摘要记忆
+│   │   └── orchestrator.py     #   总控 + 专家子 Agent 编排
+│   ├── rag/retrieval.py        #   RAG：切分 / Embedding / 余弦检索
+│   ├── server/
+│   │   ├── noc_mock.py         #   模拟 NOC 数据源（对接真实系统时整体替换）
+│   │   └── adapter.py          #   大屏后端：数据接口 / SSE 诊断流 / 工单接口
+│   ├── storage/tickets.py      #   工单存储：SQLite、幂等保护、审计字段
+│   └── mcp/server.py           #   手写 MCP Server（JSON-RPC 2.0 / stdio）
+├── web/index.html              # 监控大屏（原生 HTML/JS，零前端依赖）
+├── examples/                   # LangGraph 对照实现、MCP 客户端演示
+├── eval.py                     # Agent 评测集
+├── prompts/                    # 提示词：人设与行为规则
+├── data/knowledge/             # 运维规范知识库（演示文档，自编通用内容）
+├── notes/                      # 19 篇技术笔记（按六阶段知识地图组织）
+└── tests/                      # 17 项单元测试（零网络依赖）
 ```
-
-模块保持扁平单文件布局：本项目规模下，每个文件对应一个可独立讲解的职责单元，并与 `notes/` 中的技术笔记逐一对应。
 
 ## 质量保障
 
 ```bash
-make test    # 16 项单元测试：契约、聚合、切分、幂等、MCP 协议、记忆压缩（1.6s，零网络）
+make test    # 17 项单元测试：契约、聚合、切分、幂等、MCP 协议、记忆压缩（3s，零网络）
 make eval    # 评测集：4 类场景的成功率 / 轮数 / 时延 / 词元（需服务运行）
 ```
 

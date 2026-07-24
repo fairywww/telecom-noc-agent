@@ -1,23 +1,23 @@
 # 多 Agent 协作：总控与专家子 Agent
 
-**范围说明**：本文基于 `multi_agent.py`、三份人设提示词（`prompts/orchestrator.txt`、`data_analyst.txt`、`knowledge_expert.txt`）与 `agent.py` 的参数化改造。核心问题：**什么时候值得把一个 Agent 拆成多个，代价是什么。**
+**范围说明**：本文基于 `noc_agent/agent/orchestrator.py`、三份人设提示词（`prompts/orchestrator.txt`、`data_analyst.txt`、`knowledge_expert.txt`）与 `noc_agent/agent/loop.py` 的参数化改造。核心问题：**什么时候值得把一个 Agent 拆成多个，代价是什么。**
 
 ## 1. 架构：Agent as Tool
 
 ```
             总控 Agent（编排，不直接查数据）
              |                     |
-      咨询数据分析专家        咨询知识规范专家     ← 对总控而言只是两个工具
+      consult_data_analyst        consult_knowledge_expert     ← 对总控而言只是两个工具
              |                     |
       数据分析子 Agent        知识规范子 Agent    ← 各自是完整的 Agent 循环
-      （三个指标工具）         （查运维知识）
+      （三个指标工具）         （search_ops_knowledge）
 ```
 
-子 Agent 被包装成普通函数注册进总控的工具表——总控"调用专家"与"调用接口"在机制上没有任何区别。这一模式称为 Agent as Tool，是多 Agent 系统最简单也最常用的组织方式。
+子 Agent 被包装成普通函数注册进总控的 TOOL_REGISTRY（工具表）——总控"调用专家"与"调用接口"在机制上没有任何区别。这一模式称为 Agent as Tool，是多 Agent 系统最简单也最常用的组织方式。
 
 ## 2. 实现：没有新机制
 
-全部改动是给 `运行Agent流()` 增加两个参数：`工具集`（工具子集或自定义工具）与 `系统提示文本`（人设）。子 Agent = 装上专属人设与受限工具箱的同一个循环；`建专家()` 再把它包成一个带 `task` 参数的工具。
+全部改动是给 `run_agent_stream()` 增加两个参数：`toolset`（工具子集或自定义工具）与 `system_prompt`（人设）。子 Agent = 装上专属人设与受限工具箱的同一个循环；`build_expert()` 再把它包成一个带 `task` 参数的工具。
 
 三个设计点：
 
@@ -67,7 +67,7 @@
 ## 6. 验证
 
 ```bash
-python3 multi_agent.py "南京情况多严重？按规范怎么处置？"
+python3 -m noc_agent.agent.orchestrator "南京情况多严重？按规范怎么处置？"
 ```
 
 预期：先后出现两条"咨询专家"工具事件，最终答复分段标注来源。

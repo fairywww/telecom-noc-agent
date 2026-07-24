@@ -1,6 +1,6 @@
 # 多轮对话与记忆管理
 
-**范围说明**：本文基于 `conversation.py`、`agent.py` 的历史参数改造与 `/api/agent/stream` 的会话接入。前置阅读：[agent-loop.md](agent-loop.md) 第 4 节（State 就是 messages）。
+**范围说明**：本文基于 `noc_agent/agent/memory.py`、`noc_agent/agent/loop.py` 的历史参数改造与 `/api/agent/stream` 的会话接入。前置阅读：[agent-loop.md](agent-loop.md) 第 4 节（State 就是 messages）。
 
 ## 1. 问题：Agent 天生失忆
 
@@ -8,7 +8,7 @@
 
 ## 2. 记忆结构：摘要 + 近期原文
 
-`conversation.py` 的 `会话` 类维护两段记忆：
+`noc_agent/agent/memory.py` 的 `会话` 类维护两段记忆：
 
 ```
 messages = [system] + [此前对话摘要(如有)] + [最近 N 轮问答原文] + [新问题]
@@ -32,7 +32,7 @@ messages = [system] + [此前对话摘要(如有)] + [最近 N 轮问答原文] 
 
 ## 4. 接入方式
 
-- `运行Agent流()` 新增 `历史片段` 参数，插在 system 之后——循环本体不感知会话概念，职责仍然单一；
+- `run_agent_stream()` 新增 `历史片段` 参数，插在 system 之后——循环本体不感知会话概念，职责仍然单一；
 - `/api/agent/stream` 请求体新增可选 `session_id`：带上即启用记忆（服务端 `会话表` 按号存取），不带则保持无状态——**记忆是选配，不是强制**；
 - 前端每次打开大屏生成一个随机会话号，页面生命周期即会话生命周期。
 
@@ -45,8 +45,8 @@ messages = [system] + [此前对话摘要(如有)] + [最近 N 轮问答原文] 
 ## 6. 验证
 
 ```bash
-python3 -m pytest tests/test_conversation.py -v          # 结构与压缩逻辑
-printf "苏州现在退服多少个？\n那南京呢？比刚才那个多多少？\n" | python3 conversation.py
+python3 -m pytest tests/test_noc_agent/agent/memory.py -v          # 结构与压缩逻辑
+printf "苏州现在退服多少个？\n那南京呢？比刚才那个多多少？\n" | python3 -m noc_agent.agent.memory
 ```
 
 浏览器：连续两问（第二问用代词），观察第二问被正确解析。实测："无锡情况怎么样？"→"**它**在三个地市里排第几？"——"它"被正确解析为无锡。

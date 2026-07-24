@@ -1,6 +1,6 @@
 # 流式输出：从 LLM 到浏览器的完整链路
 
-**范围说明**：本文基于 v0.8 的改动：`agent.py` 重构为流式生成器、`adapter.py` 的 `/api/agent/stream` SSE 接口、`index.html` 的流式渲染。前置阅读：[llm-basics.md](llm-basics.md) 第 4 节。
+**范围说明**：本文基于 v0.8 的改动：`noc_agent/agent/loop.py` 重构为流式生成器、`noc_agent/server/adapter.py` 的 `/api/agent/stream` SSE 接口、`web/index.html` 的流式渲染。前置阅读：[llm-basics.md](llm-basics.md) 第 4 节。
 
 ## 1. 为什么要流式
 
@@ -10,7 +10,7 @@ Agent 一次诊断耗时数十秒。非流式下用户面对空白等待全部�
 
 ```
 LLM 流式应答          Python 生成器            SSE                浏览器
-chunk/delta   ──▶   运行Agent流() 产出事件  ──▶  data: {...}\n\n ──▶ ReadableStream 解析渲染
+chunk/delta   ──▶   run_agent_stream() 产出事件  ──▶  data: {...}\n\n ──▶ ReadableStream 解析渲染
 （上游）             （加工与转发）             （传输协议）          （消费）
 ```
 
@@ -18,11 +18,11 @@ chunk/delta   ──▶   运行Agent流() 产出事件  ──▶  data: {...}\
 
 ## 3. 核心重构：单一生成器架构
 
-`运行Agent流()` 是一个生成器：执行循环的同时 `yield` 事件字典（`文字` / `工具` / `完成` / `错误`）。三个消费方共用它：
+`run_agent_stream()` 是一个生成器：执行循环的同时 `yield` 事件字典（`文字` / `工具` / `完成` / `错误`）。三个消费方共用它：
 
 | 消费方 | 用法 |
 |--------|------|
-| 命令行 / 评测 | `运行Agent()` 封装：攒齐事件后返回完整结果 |
+| 命令行 / 评测 | `run_agent()` 封装：攒齐事件后返回完整结果 |
 | SSE 接口 | 每个事件包成一条 `data:` 消息即时下发 |
 
 **一份循环逻辑，多种消费方式**——此前非流式与流式各写一份循环的话，任何修改都要同步两处，必然漂移。
@@ -31,7 +31,7 @@ chunk/delta   ──▶   运行Agent流() 产出事件  ──▶  data: {...}\
 
 ### 4.1 流式模式下的 tool_calls 组装
 
-流式应答中，工具调用请求也是碎片化到达的：函数名一片、参数 JSON 被切成多片，各碎片带 `index` 标识归属。必须按 `index` 分组、逐片拼接 `arguments`，流结束后才能得到完整调用请求（`agent.py` 的 `组装中` 字典）。这是流式 Agent 与非流式的最大实现差异。
+流式应答中，工具调用请求也是碎片化到达的：函数名一片、参数 JSON 被切成多片，各碎片带 `index` 标识归属。必须按 `index` 分组、逐片拼接 `arguments`，流结束后才能得到完整调用请求（`noc_agent/agent/loop.py` 的 `组装中` 字典）。这是流式 Agent 与非流式的最大实现差异。
 
 ### 4.2 流式下的用量统计
 
@@ -62,7 +62,7 @@ curl -N -X POST http://localhost:8002/api/agent/stream \
 ## 自测
 
 1. 三段流（LLM→生成器→SSE→浏览器）中任何一段改成"攒齐再发"，用户体验会退化成什么样？哪一段最容易被无意写成攒齐再发？
-2. 流式模式下为什么不能在收到第一个 tool_calls 碎片时就执行工具？
+2. 流式模式下为什么不能在收到第一个 tool_calls 碎片时就execute_tool？
 3. 前端为什么需要缓冲区？如果直接对每个网络分块做 `JSON.parse` 会发生什么？
 
 建议实际修改验证，验证后 `git checkout -- <文件名>` 恢复。
