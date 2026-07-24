@@ -1,0 +1,3 @@
+# 可选依赖：仅 langgraph_agent.py（框架对比章）需要，核心项目不依赖
+langgraph==0.6.11
+langchain-openai==0.3.35

@@ -80,6 +80,7 @@ python3 eval.py            # Agent 评测集（成功率/轮数/耗时/Token）
 - [x] **v0.9 MCP Server** — 工具层独立模块；手写最小 MCP 协议实现（initialize / tools/list / tools/call，stdio 传输）
 - [x] **v1.0 多 Agent 协作** — 总控 + 数据分析/知识规范两专家（Agent as Tool），实测单/多 Agent 成本对比
 - [x] **v1.1 多轮对话与记忆** — 会话管理（滚动摘要 + 近期原文），大屏对话支持上下文追问
+- [x] **v1.2 LangGraph 对比章** — 同一 Agent 用框架重写，逐概念对照笔记（State/Node/ToolNode ↔ 手写循环）
 - [ ] **backlog** — 大屏剩余面板（故障等级、实时告警）；适配层对接真实 NOC 数据源（鉴权/异常/超时）
 
 ## 知识库
@@ -94,4 +95,5 @@ python3 eval.py            # Agent 评测集（成功率/轮数/耗时/Token）
 当前：Python · FastAPI · 原生 HTML/JS · OpenAI 兼容 LLM API（Qwen）· 手写 Agent 循环（工具调用/多轮取数/轨迹展示）· RAG（Embedding + 余弦检索）· Docker · pytest · 评测集
 当前还包括：MCP Server（手写协议实现）· 多 Agent 编排（总控 + 专家子 Agent）
 当前还包括：多轮对话与记忆管理（滚动摘要）
-规划中：Milvus/FAISS（知识规模化）· LangGraph 对比 · 真实 NOC 数据源对接
+当前还包括：LangGraph 对比实现（可选依赖）
+规划中：Milvus/FAISS（知识规模化）· 真实 NOC 数据源对接 · 工单自动生成
