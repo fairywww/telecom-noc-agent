@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>云网智能运维监控大屏</title>
 <style>
-/* ---------- 主题变量（色彩统一在此定义） ---------- */
+/* ---------- 主题变量 ---------- */
 :root{
   --bg:#040E1E; --bg2:#03192E;
   --panel:#081A30; --panel2:#0A2038;
@@ -19,7 +19,7 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#02060F}
 body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--txt);font-size:14px}
 
-/* ---------- 舞台：固定 1920x1080 设计稿，JS 按窗口等比缩放 ---------- */
+/* ---------- 舞台：固定 1920x1080，JS 等比缩放 ---------- */
 #stage{
   width:1920px;height:1080px;position:absolute;left:50%;top:50%;
   transform-origin:center center;
@@ -34,107 +34,139 @@ body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;c
   background-size:48px 48px;}
 
 /* ---------- 顶栏 ---------- */
-header{height:86px;position:relative;flex:none;display:flex;align-items:center;justify-content:center;z-index:5}
+header{height:78px;position:relative;flex:none;display:flex;align-items:center;justify-content:center;z-index:5}
 header::after{content:"";position:absolute;left:2%;right:2%;bottom:0;height:2px;
   background:linear-gradient(90deg,transparent,rgba(0,229,255,.55) 20%,rgba(0,229,255,.9) 50%,rgba(0,229,255,.55) 80%,transparent)}
-h1{font-size:32px;letter-spacing:6px;font-weight:600;
+h1{font-size:30px;letter-spacing:6px;font-weight:600;
   background:linear-gradient(180deg,#FFFFFF 20%,#8FE9FF 60%,#38B6FF);-webkit-background-clip:text;background-clip:text;color:transparent;
   text-shadow:0 0 24px rgba(0,180,255,.35)}
-.h-side{position:absolute;top:0;height:84px;display:flex;align-items:center;gap:26px}
+.h-side{position:absolute;top:0;height:76px;display:flex;align-items:center;gap:20px}
 .h-side.l{left:28px}.h-side.r{right:28px}
-.h-clock{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:26px;color:#BFEFFF;letter-spacing:1px}
+.h-clock{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:25px;color:#BFEFFF;letter-spacing:1px}
 .h-date{font-size:12px;color:var(--sub);letter-spacing:2px;text-align:right}
-
-/* ---------- 三栏布局 ---------- */
-main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:relative;z-index:2}
-.col{display:flex;flex-direction:column;gap:14px;min-height:0}
-.col.l{width:452px;flex:none}
-.col.c{flex:1;min-width:0}
-.col.r{width:512px;flex:none}
-
-/* ---------- 面板外框（四角高亮 + 扫光标题栏） ---------- */
-.panel{background:linear-gradient(180deg,rgba(10,32,56,.92),rgba(6,20,38,.92));
-  border:1px solid var(--line2);position:relative;display:flex;flex-direction:column;min-height:0;
-  box-shadow:inset 0 0 30px rgba(0,90,160,.12)}
-.panel::before,.panel::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none}
-.panel::before{left:-1px;top:-1px;border-left:2px solid var(--cyan);border-top:2px solid var(--cyan)}
-.panel::after{right:-1px;bottom:-1px;border-right:2px solid var(--cyan);border-bottom:2px solid var(--cyan)}
-.p-hd{flex:none;height:38px;display:flex;align-items:center;gap:10px;padding:0 12px;
-  background:linear-gradient(90deg,rgba(0,133,208,.28),rgba(0,133,208,.04) 70%);
-  border-bottom:1px solid var(--line2)}
-.p-hd .tick{width:5px;height:16px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transform:skewX(-14deg)}
-.p-hd b{font-size:16px;letter-spacing:2px;font-weight:600;color:#EAF7FF;white-space:nowrap;flex:none}
-.p-hd .en{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:3px}
-.p-bd{flex:1;min-height:0;padding:10px 12px;position:relative;overflow:hidden}
-
-/* ---------- KPI 网格 ---------- */
-.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;height:100%}
-.kpi{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(13,42,72,.6),rgba(8,26,48,.3));
-  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
-.kpi b{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:34px;line-height:1.15;font-weight:600;color:#DFF6FF;text-shadow:0 0 16px rgba(0,229,255,.45)}
-.kpi span{font-size:11.5px;color:var(--sub)}
-.kpi.hot b{color:var(--urgent);text-shadow:0 0 16px rgba(255,214,102,.4)}
-
-/* ---------- 地市退服条形图 ---------- */
-.bars{flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;padding:8px 16px}
-.crow{display:flex;align-items:center;gap:14px}
-.crow .name{width:60px;flex:none;text-align:right;font-size:16px;letter-spacing:3px;color:var(--txt)}
-.crow .track{flex:1;height:24px;display:flex;background:rgba(8,26,48,.55);border:1px solid var(--line2)}
-.seg{height:100%}
-.seg.g4{background:linear-gradient(90deg,rgba(0,229,255,.25),rgba(0,229,255,.75))}
-.seg.g5{background:linear-gradient(90deg,rgba(61,139,255,.30),rgba(61,139,255,.85))}
-.crow .val{width:56px;flex:none;font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:20px;color:#DFF6FF;text-shadow:0 0 12px rgba(0,229,255,.35)}
-.legend{flex:none;display:flex;justify-content:center;gap:22px;padding:6px 0 2px;font-size:11px;color:var(--sub)}
-.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
-.legend .g4{background:rgba(0,229,255,.65)}
-.legend .g5{background:rgba(61,139,255,.75)}
-
-/* ---------- Agent 诊断对话窗 ---------- */
-.chat-log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px}
-.msg{font-size:12.5px;line-height:1.65;padding:8px 10px;border:1px solid var(--line2);white-space:pre-wrap;word-break:break-word}
-.msg.user{align-self:flex-end;max-width:85%;color:var(--cyan);background:rgba(0,229,255,.07)}
-.msg.agent{align-self:flex-start;max-width:96%;color:var(--txt);background:rgba(13,42,72,.5)}
-.msg.trace{align-self:flex-start;color:var(--dim);font-size:11px;border-style:dashed;padding:4px 8px}
-.chat-input{flex:none;display:flex;gap:8px;margin-top:10px}
-.chat-input input{flex:1;background:rgba(8,26,48,.7);border:1px solid var(--line);color:var(--txt);padding:9px 10px;font-size:13px;outline:none}
-.chat-input input::placeholder{color:var(--dim)}
-.chat-input button{background:rgba(0,229,255,.12);border:1px solid var(--line);color:var(--cyan);padding:0 18px;font-size:13px;letter-spacing:2px;cursor:pointer}
-.chat-input button:disabled{opacity:.45;cursor:wait}
-
-/* ---------- 处置工单列表 ---------- */
-.ticket{border:1px solid var(--line2);border-left:3px solid var(--urgent);border-radius:0;
-  background:rgba(13,42,72,.45);padding:8px 10px;margin-bottom:8px}
-.t-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#EAF7FF}
-.t-status{font-size:11px;color:var(--urgent);border:1px solid rgba(255,214,102,.4);padding:1px 8px}
-.t-body{font-size:12px;color:var(--txt);line-height:1.5;margin:4px 0}
-.t-meta{font-size:10.5px;color:var(--dim)}
-
-/* ---------- 智能调度台 ---------- */
-.proposal{border:1px solid var(--line);border-left:3px solid var(--crit);border-radius:0;
-  background:rgba(13,42,72,.5);padding:9px 11px;margin-bottom:9px}
-.proposal.done{border-left-color:var(--dim);opacity:.55}
-.pp-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#EAF7FF}
-.pp-pri{font-size:11px;color:var(--crit);border:1px solid rgba(255,77,94,.45);padding:1px 8px}
-.pp-pri.done{color:var(--dim);border-color:var(--line2)}
-.pp-body{font-size:12px;color:var(--txt);line-height:1.55;margin:5px 0;white-space:pre-wrap}
-.pp-diag{font-size:11.5px;color:var(--sub);line-height:1.55;margin:4px 0;border-top:1px dashed var(--line2);padding-top:5px}
-.pp-ops{display:flex;gap:8px;margin-top:6px}
-.pp-ops button{font-size:12px;letter-spacing:1px;padding:4px 14px;cursor:pointer;
-  background:rgba(0,229,255,.12);border:1px solid var(--line);color:var(--cyan)}
-.pp-ops button.reject{background:transparent;color:var(--dim);border-color:var(--line2)}
-.pp-ops button:disabled{opacity:.4;cursor:wait}
-
-/* ---------- 导演遥控（演示控制） ---------- */
 .demo-ctl{display:flex;align-items:center;gap:8px}
 .demo-ctl span{font-size:11px;color:var(--dim);letter-spacing:1px}
 .demo-ctl button{font-size:11px;padding:3px 10px;cursor:pointer;letter-spacing:1px;
   background:rgba(0,229,255,.08);border:1px solid var(--line2);color:var(--sub)}
 .demo-ctl button:hover{color:var(--cyan);border-color:var(--line)}
 
-/* ---------- 空状态占位 ---------- */
+/* ---------- 三栏布局 ---------- */
+main{flex:1;display:flex;gap:12px;padding:12px 20px 16px;min-height:0;position:relative;z-index:2}
+.col{display:flex;flex-direction:column;gap:12px;min-height:0}
+.col.l{width:430px;flex:none}
+.col.c{flex:1;min-width:0}
+.col.r{width:500px;flex:none}
+
+/* ---------- 面板外框 ---------- */
+.panel{background:linear-gradient(180deg,rgba(10,32,56,.92),rgba(6,20,38,.92));
+  border:1px solid var(--line2);position:relative;display:flex;flex-direction:column;min-height:0;
+  box-shadow:inset 0 0 30px rgba(0,90,160,.12)}
+.panel::before,.panel::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:2px solid var(--cyan);border-top:2px solid var(--cyan)}
+.panel::after{right:-1px;bottom:-1px;border-right:2px solid var(--cyan);border-bottom:2px solid var(--cyan)}
+.p-hd{flex:none;height:36px;display:flex;align-items:center;gap:10px;padding:0 12px;
+  background:linear-gradient(90deg,rgba(0,133,208,.28),rgba(0,133,208,.04) 70%);
+  border-bottom:1px solid var(--line2)}
+.p-hd .tick{width:5px;height:15px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transform:skewX(-14deg)}
+.p-hd b{font-size:15px;letter-spacing:2px;font-weight:600;color:#EAF7FF;white-space:nowrap;flex:none}
+.p-hd .en{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-bd{flex:1;min-height:0;padding:9px 11px;position:relative;overflow:hidden}
+
+/* ---------- KPI 网格（3×2） ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:6px;height:100%}
+.kpi{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(13,42,72,.6),rgba(8,26,48,.3));
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
+.kpi b{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:27px;line-height:1.1;font-weight:600;color:#DFF6FF;text-shadow:0 0 16px rgba(0,229,255,.45)}
+.kpi span{font-size:11px;color:var(--sub)}
+.kpi.hot b{color:var(--urgent);text-shadow:0 0 16px rgba(255,214,102,.4)}
+.kpi.crit b{color:var(--crit);text-shadow:0 0 16px rgba(255,77,94,.45)}
+
+/* ---------- 故障等级分布 ---------- */
+.lv-row{display:flex;gap:8px;height:100%;align-items:stretch}
+.lv-cell{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;
+  border:1px solid var(--line2);background:rgba(8,26,48,.5);position:relative}
+.lv-cell::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--c)}
+.lv-cell b{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:24px;color:var(--c);text-shadow:0 0 10px var(--c)}
+.lv-cell span{font-size:11px;color:var(--sub);margin-top:2px}
+
+/* ---------- 闭环运营指标 ---------- */
+.ops-list{display:flex;flex-direction:column;justify-content:space-evenly;height:100%}
+.ops-row{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;font-size:12.5px;color:var(--sub);
+  border-bottom:1px dashed rgba(61,139,255,.12)}
+.ops-row:last-child{border-bottom:none}
+.ops-row b{font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:19px;color:#DFF6FF}
+.ops-row b.ok{color:var(--ok)} .ops-row b.hot{color:var(--urgent)}
+
+/* ---------- 退服趋势 ---------- */
+.trend-wrap{height:100%;display:flex;flex-direction:column}
+.trend-meta{flex:none;display:flex;justify-content:space-between;font-size:11px;color:var(--dim);padding:0 4px 4px}
+.trend-meta b{color:var(--cyan);font-family:var(--num-font)}
+#trendSvg{flex:1;width:100%}
+
+/* ---------- 地市条形图 ---------- */
+.bars{flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px;padding:6px 14px}
+.crow{display:flex;align-items:center;gap:14px}
+.crow .name{width:56px;flex:none;text-align:right;font-size:15px;letter-spacing:3px;color:var(--txt)}
+.crow .track{flex:1;height:22px;display:flex;background:rgba(8,26,48,.55);border:1px solid var(--line2)}
+.seg{height:100%}
+.seg.g4{background:linear-gradient(90deg,rgba(0,229,255,.25),rgba(0,229,255,.75))}
+.seg.g5{background:linear-gradient(90deg,rgba(61,139,255,.30),rgba(61,139,255,.85))}
+.crow .val{width:50px;flex:none;font-family:var(--num-font);font-variant-numeric:tabular-nums;font-size:19px;color:#DFF6FF;text-shadow:0 0 12px rgba(0,229,255,.35)}
+.legend{flex:none;display:flex;justify-content:center;gap:22px;padding:4px 0 0;font-size:11px;color:var(--sub)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+.legend .g4{background:rgba(0,229,255,.65)}
+.legend .g5{background:rgba(61,139,255,.75)}
+
+/* ---------- 网络事件列表 ---------- */
+.ev{display:flex;align-items:center;gap:9px;padding:6px 8px;margin-bottom:6px;
+  border:1px solid var(--line2);background:rgba(13,42,72,.4);font-size:12px}
+.ev.cleared{opacity:.42}
+.ev .sev{flex:none;font-size:10.5px;padding:1px 7px;border:1px solid;letter-spacing:1px}
+.ev .sev.紧急{color:var(--crit);border-color:rgba(255,77,94,.5)}
+.ev .sev.重要{color:var(--major);border-color:rgba(255,159,64,.5)}
+.ev .sev.次要{color:var(--urgent);border-color:rgba(255,214,102,.4)}
+.ev .body{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.ev .meta{flex:none;font-size:10.5px;color:var(--dim)}
+
+/* ---------- 智能调度台 ---------- */
+.proposal{border:1px solid var(--line);border-left:3px solid var(--crit);border-radius:0;
+  background:rgba(13,42,72,.5);padding:8px 10px;margin-bottom:8px}
+.proposal.done{border-left-color:var(--dim);opacity:.55}
+.pp-top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#EAF7FF}
+.pp-pri{font-size:10.5px;color:var(--crit);border:1px solid rgba(255,77,94,.45);padding:1px 7px}
+.pp-pri.done{color:var(--dim);border-color:var(--line2)}
+.pp-body{font-size:11.5px;color:var(--txt);line-height:1.5;margin:4px 0;white-space:pre-wrap}
+.pp-diag{font-size:11px;color:var(--sub);line-height:1.5;margin:3px 0;border-top:1px dashed var(--line2);padding-top:4px}
+.pp-ops{display:flex;gap:8px;margin-top:5px}
+.pp-ops button{font-size:11.5px;letter-spacing:1px;padding:3px 13px;cursor:pointer;
+  background:rgba(0,229,255,.12);border:1px solid var(--line);color:var(--cyan)}
+.pp-ops button.reject{background:transparent;color:var(--dim);border-color:var(--line2)}
+.pp-ops button:disabled{opacity:.4;cursor:wait}
+
+/* ---------- 处置工单 ---------- */
+.ticket{border:1px solid var(--line2);border-left:3px solid var(--urgent);border-radius:0;
+  background:rgba(13,42,72,.45);padding:7px 9px;margin-bottom:7px}
+.t-top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#EAF7FF}
+.t-status{font-size:10.5px;color:var(--urgent);border:1px solid rgba(255,214,102,.4);padding:1px 7px}
+.t-body{font-size:11.5px;color:var(--txt);line-height:1.45;margin:3px 0}
+.t-meta{font-size:10px;color:var(--dim)}
+
+/* ---------- 诊断对话 ---------- */
+.chat-log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:3px 2px}
+.msg{font-size:12px;line-height:1.6;padding:7px 9px;border:1px solid var(--line2);white-space:pre-wrap;word-break:break-word}
+.msg.user{align-self:flex-end;max-width:85%;color:var(--cyan);background:rgba(0,229,255,.07)}
+.msg.agent{align-self:flex-start;max-width:96%;color:var(--txt);background:rgba(13,42,72,.5)}
+.msg.trace{align-self:flex-start;color:var(--dim);font-size:10.5px;border-style:dashed;padding:3px 7px}
+.chat-input{flex:none;display:flex;gap:8px;margin-top:8px}
+.chat-input input{flex:1;background:rgba(8,26,48,.7);border:1px solid var(--line);color:var(--txt);padding:8px 10px;font-size:12.5px;outline:none}
+.chat-input input::placeholder{color:var(--dim)}
+.chat-input button{background:rgba(0,229,255,.12);border:1px solid var(--line);color:var(--cyan);padding:0 16px;font-size:12.5px;letter-spacing:2px;cursor:pointer}
+.chat-input button:disabled{opacity:.45;cursor:wait}
+
+/* ---------- 空状态 ---------- */
 .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim)}
-.placeholder b{font-size:13px;letter-spacing:3px;font-weight:400}
-.placeholder span{font-size:11px;letter-spacing:1px;border:1px solid var(--line2);padding:2px 10px}
+.placeholder b{font-size:12px;letter-spacing:3px;font-weight:400}
+.placeholder span{font-size:10.5px;letter-spacing:1px;border:1px solid var(--line2);padding:2px 10px}
 </style>
 </head>
 <body>
@@ -154,17 +186,28 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
   </header>
 
   <main>
-    <!-- 左栏 -->
+    <!-- 左栏：总览 / 等级 / 闭环运营 / 工单 -->
     <div class="col l">
-      <section class="panel" style="height:220px">
-        <div class="p-hd"><i class="tick"></i><b>网络运行总览</b><span class="en">NETWORK OVERVIEW</span></div>
+      <section class="panel" style="height:216px">
+        <div class="p-hd"><i class="tick"></i><b>全网 KPI 总览</b><span class="en">NETWORK KPI</span></div>
         <div class="p-bd">
           <div class="kpi-grid">
-            <div class="kpi"><b id="kpiOutage">--</b><span>全网退服总数</span></div>
-            <div class="kpi"><b id="kpiCities">--</b><span>覆盖地市</span></div>
+            <div class="kpi"><b id="kpiOutage">--</b><span>退服总数</span></div>
             <div class="kpi hot"><b id="kpiAlarms">--</b><span>告警总数</span></div>
+            <div class="kpi"><b id="kpiCities">--</b><span>覆盖地市</span></div>
+            <div class="kpi crit"><b id="kpiCrit">--</b><span>紧急告警</span></div>
+            <div class="kpi hot"><b id="kpiPending">--</b><span>待确认建议单</span></div>
+            <div class="kpi"><b id="kpiOpenTickets">--</b><span>在办工单</span></div>
           </div>
         </div>
+      </section>
+      <section class="panel" style="height:132px">
+        <div class="p-hd"><i class="tick"></i><b>故障等级分布</b><span class="en">FAULT LEVELS</span></div>
+        <div class="p-bd"><div class="lv-row" id="lvRow"></div></div>
+      </section>
+      <section class="panel" style="height:190px">
+        <div class="p-hd"><i class="tick"></i><b>闭环运营指标</b><span class="en">CLOSED-LOOP OPS</span></div>
+        <div class="p-bd"><div class="ops-list" id="opsList"></div></div>
       </section>
       <section class="panel" style="flex:1">
         <div class="p-hd"><i class="tick"></i><b>处置工单</b><span class="en">TICKETS</span></div>
@@ -172,8 +215,17 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
       </section>
     </div>
 
-    <!-- 中栏 -->
+    <!-- 中栏：趋势 / 地市分布 / 调度台 -->
     <div class="col c">
+      <section class="panel" style="height:236px">
+        <div class="p-hd"><i class="tick"></i><b>退服趋势 · 演示外推</b><span class="en">TREND &amp; PROJECTION</span></div>
+        <div class="p-bd">
+          <div class="trend-wrap">
+            <div class="trend-meta"><span>每 5 秒采样 · 实线为实时值，虚线为线性外推（演示）</span><span>当前 <b id="trendNow">--</b></span></div>
+            <svg id="trendSvg" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+      </section>
       <section class="panel" style="flex:1;min-height:0">
         <div class="p-hd"><i class="tick"></i><b>地市退服分布</b><span class="en">CITY OUTAGE</span></div>
         <div class="p-bd" style="display:flex;flex-direction:column">
@@ -181,22 +233,26 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
           <div class="legend"><span><i class="g4"></i>4G</span><span><i class="g5"></i>5G</span></div>
         </div>
       </section>
-      <section class="panel" style="flex:1;min-height:0">
+      <section class="panel" style="flex:1.15;min-height:0">
         <div class="p-hd"><i class="tick"></i><b>智能调度台</b><span class="en">AI DISPATCH CONSOLE</span></div>
         <div class="p-bd" style="overflow-y:auto"><div id="proposalList"></div></div>
       </section>
     </div>
 
-    <!-- 右栏 -->
+    <!-- 右栏：网络事件 / 诊断对话 -->
     <div class="col r">
-      <section class="panel" style="flex:1">
+      <section class="panel" style="flex:1;min-height:0">
+        <div class="p-hd"><i class="tick"></i><b>网络事件 · 重要关注</b><span class="en">NETWORK EVENTS</span></div>
+        <div class="p-bd" style="overflow-y:auto"><div id="evList"></div></div>
+      </section>
+      <section class="panel" style="flex:1.25;min-height:0">
         <div class="p-hd"><i class="tick"></i><b>智能诊断</b><span class="en">DIAGNOSIS AGENT</span></div>
         <div class="p-bd" style="display:flex;flex-direction:column">
           <div class="chat-log" id="chatLog">
             <div class="msg agent">我是网络诊断 Agent，可基于实时数据回答。试试：
 · 现在全网状况如何？
 · 苏州的情况需要关注吗？
-· 哪个地市 4G 问题最突出？</div>
+· 按规范批量退服该怎么处置？</div>
           </div>
           <div class="chat-input">
             <input id="questionInput" placeholder="输入运维问题，回车或点击诊断">
@@ -209,13 +265,11 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 </div>
 
 <script>
-/* ---- 舞台缩放：按窗口大小等比缩放 1920x1080 设计稿 ---- */
+/* ---- 舞台缩放与时钟 ---- */
 function fitStage(){
   const scale = Math.min(innerWidth/1920, innerHeight/1080);
   document.getElementById("stage").style.transform = `translate(-50%,-50%) scale(${scale.toFixed(4)})`;
 }
-
-/* ---- 顶栏时钟 ---- */
 function tickClock(){
   const d = new Date(), pad = n => String(n).padStart(2,"0");
   document.getElementById("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
@@ -223,19 +277,53 @@ function tickClock(){
     `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} 星期${"日一二三四五六"[d.getDay()]}`;
 }
 
-/* ---- KPI：取数 → 解析 → 填入 ---- */
+/* ---- KPI + 趋势采样：同一份数据喂两个面板 ---- */
+const trendHistory = [];              // 最近 48 个采样点（4 分钟窗口）
+
 async function renderKpi(){
   const data = await (await fetch("/api/kpi")).json();
   document.getElementById("kpiOutage").textContent = data.outage_total;
   document.getElementById("kpiCities").textContent = data.city_count;
   document.getElementById("kpiAlarms").textContent = data.alarm_total;
+  trendHistory.push(data.outage_total);
+  if (trendHistory.length > 48) trendHistory.shift();
+  renderTrend();
 }
 
-/* ---- 地市退服条形图：明细列表 → 按最大值归一化的分段条 ---- */
+/* ---- 退服趋势：实线为实测采样，虚线为最近斜率的线性外推（演示） ---- */
+function renderTrend(){
+  const svg = document.getElementById("trendSvg");
+  if (trendHistory.length < 2) return;
+  const w = 600, h = 150, pad = 8;
+  const projSteps = 6;
+  const slope = trendHistory.length >= 4
+    ? (trendHistory.at(-1) - trendHistory.at(-4)) / 3 : 0;
+  const projection = Array.from({length: projSteps},
+    (_, i) => Math.max(0, trendHistory.at(-1) + slope * (i + 1)));
+  const all = trendHistory.concat(projection);
+  const min = Math.min(...all) - 4, max = Math.max(...all) + 4;
+  const total = 48 + projSteps;
+  const x = i => pad + (w - 2*pad) * i / (total - 1);
+  const y = v => h - pad - (h - 2*pad) * (v - min) / (max - min);
+  const offset = 48 - trendHistory.length;      // 数据不足时靠右对齐
+  const pts = trendHistory.map((v, i) => `${x(offset + i)},${y(v)}`).join(" ");
+  const lastX = x(offset + trendHistory.length - 1), lastY = y(trendHistory.at(-1));
+  const projPts = [`${lastX},${lastY}`].concat(
+    projection.map((v, i) => `${x(offset + trendHistory.length + i)},${y(v)}`)).join(" ");
+  svg.innerHTML = `
+    <polyline points="${pts} ${lastX},${h-pad} ${x(offset)},${h-pad}"
+      fill="rgba(0,229,255,.08)" stroke="none"/>
+    <polyline points="${pts}" fill="none" stroke="#00E5FF" stroke-width="2"/>
+    <polyline points="${projPts}" fill="none" stroke="#FFD666" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <circle cx="${lastX}" cy="${lastY}" r="3.5" fill="#00E5FF"/>`;
+  document.getElementById("trendNow").textContent = trendHistory.at(-1);
+}
+
+/* ---- 地市退服条形图 ---- */
 async function renderCityBars(){
   const data = await (await fetch("/api/city-outage")).json();
-  const cities = data.cities;                                  // 服务端已按 total 降序
-  const max = Math.max(...cities.map(c => c.total));           // 用最大值做宽度基准
+  const cities = data.cities;
+  const max = Math.max(...cities.map(c => c.total));
   document.getElementById("cityBars").innerHTML = cities.map(c => {
     const segments = Object.entries(c.by_tech).map(([tech, value]) =>
       `<div class="seg ${tech === "4G" ? "g4" : "g5"}"
@@ -249,37 +337,69 @@ async function renderCityBars(){
   }).join("");
 }
 
-/* ---- 处置工单列表：Agent 建的单实时出现在这里 ---- */
-async function renderTickets(){
-  const data = await (await fetch("/api/tickets")).json();
-  document.getElementById("ticketList").innerHTML = data.tickets.length
-    ? data.tickets.map(t => `
-      <div class="ticket">
-        <div class="t-top"><b>#${t.id} ${t.city}</b><span class="t-status">${t.status}</span></div>
-        <div class="t-body">${t.summary}</div>
-        <div class="t-meta">${t.created_at} · 时限 ${t.deadline_hours} 小时 · 来源 ${t.source}</div>
+/* ---- 网络事件 + 故障等级分布 + 紧急告警 KPI：一次拉取喂三处 ---- */
+const SEV_COLORS = {"紧急": "var(--crit)", "重要": "var(--major)", "次要": "var(--urgent)", "提示": "var(--ok)"};
+
+async function renderAlarms(){
+  const data = await (await fetch("/api/alarms")).json();
+  const alarms = data.alarms;
+  const active = alarms.filter(a => a.status === "active");
+
+  const counts = {"紧急": 0, "重要": 0, "次要": 0, "提示": 0};
+  active.forEach(a => { if (a.severity in counts) counts[a.severity]++; });
+  document.getElementById("lvRow").innerHTML = Object.entries(counts).map(([sev, n]) =>
+    `<div class="lv-cell" style="--c:${SEV_COLORS[sev]}"><b>${n}</b><span>${sev}</span></div>`).join("");
+  document.getElementById("kpiCrit").textContent = counts["紧急"];
+
+  const shown = active.concat(alarms.filter(a => a.status !== "active")).slice(0, 18);
+  document.getElementById("evList").innerHTML = shown.length
+    ? shown.map(a => `
+      <div class="ev ${a.status === "active" ? "" : "cleared"}">
+        <span class="sev ${a.severity}">${a.severity}</span>
+        <span class="body">${a.city} ${a.site} · ${a.type}${a.ring ? " · " + a.ring : ""}</span>
+        <span class="meta">${a.tech} · ${a.status === "active" ? "活跃" : "已清除"}</span>
       </div>`).join("")
-    : '<div class="placeholder"><b>暂 无 工 单</b><span>可在右侧要求 Agent 建单</span></div>';
+    : '<div class="placeholder"><b>暂 无 网 络 事 件</b></div>';
 }
 
-/* ---- 智能调度台：建议单队列，人工确认/否决（审批门） ---- */
-let lastProposalsJson = "";      // 数据未变化不重绘——避免轮询销毁用户正要点击的按钮
+/* ---- 闭环运营指标：来自调度闭环的真实统计 ---- */
+async function renderOps(proposals, tickets){
+  const total = proposals.length;
+  const confirmed = proposals.filter(p => p.status === "已确认").length;
+  const pending = proposals.filter(p => p.status === "待确认").length;
+  const autoTickets = tickets.filter(t => t.source === "dispatcher").length;
+  document.getElementById("kpiPending").textContent = pending;
+  document.getElementById("kpiOpenTickets").textContent = tickets.filter(t => t.status === "待处理").length;
+  document.getElementById("opsList").innerHTML = `
+    <div class="ops-row"><span>自动研判事件（累计）</span><b>${total}</b></div>
+    <div class="ops-row"><span>建议单确认率</span><b class="ok">${total ? Math.round(confirmed/total*100) : "--"}%</b></div>
+    <div class="ops-row"><span>调度自动生成工单</span><b>${autoTickets}</b></div>
+    <div class="ops-row"><span>批量退服响应时限（规范）</span><b class="hot">4h</b></div>`;
+}
+
+/* ---- 智能调度台（数据未变不重绘，保护按钮） ---- */
+let lastProposalsJson = "";
 
 async function renderProposals(){
-  const data = await (await fetch("/api/proposals")).json();
-  const snapshot = JSON.stringify(data);
+  const [pData, tData] = await Promise.all([
+    (await fetch("/api/proposals")).json(),
+    (await fetch("/api/tickets")).json(),
+  ]);
+  renderOps(pData.proposals, tData.tickets);
+  renderTicketList(tData.tickets);
+  const snapshot = JSON.stringify(pData);
   if (snapshot === lastProposalsJson) return;
   lastProposalsJson = snapshot;
-  document.getElementById("proposalList").innerHTML = data.proposals.length
-    ? data.proposals.map(p => {
-        const pending = p.status === "待确认";
+  document.getElementById("proposalList").innerHTML = pData.proposals.length
+    ? pData.proposals.map(p => {
+        const pendingRow = p.status === "待确认";
         return `
-        <div class="proposal ${pending ? "" : "done"}">
+        <div class="proposal ${pendingRow ? "" : "done"}">
           <div class="pp-top"><b>建议单 #${p.id} ${p.city}</b>
-            <span class="pp-pri ${pending ? "" : "done"}">${p.priority} · 限 ${p.deadline_hours}h · ${p.status}</span></div>
+            <span class="pp-pri ${pendingRow ? "" : "done"}">${p.priority} · 限 ${p.deadline_hours}h · ${p.status}</span></div>
           <div class="pp-body">${p.summary}</div>
           <div class="pp-diag">${p.diagnosis}</div>
-          ${pending ? `<div class="pp-ops">
+          ${pendingRow ? `<div class="pp-ops">
             <button onclick="actOnProposal(${p.id}, 'confirm', this)">确认并派单</button>
             <button class="reject" onclick="actOnProposal(${p.id}, 'reject', this)">否决</button>
           </div>` : (p.ticket_id ? `<div class="pp-diag">已转工单 #${p.ticket_id}</div>` : "")}
@@ -288,31 +408,37 @@ async function renderProposals(){
     : '<div class="placeholder"><b>暂 无 待 研 判 事 件</b><span>调度器监听告警中</span></div>';
 }
 
+function renderTicketList(tickets){
+  document.getElementById("ticketList").innerHTML = tickets.length
+    ? tickets.map(t => `
+      <div class="ticket">
+        <div class="t-top"><b>#${t.id} ${t.city}</b><span class="t-status">${t.status}</span></div>
+        <div class="t-body">${t.summary}</div>
+        <div class="t-meta">${t.created_at} · 时限 ${t.deadline_hours}h · 来源 ${t.source}</div>
+      </div>`).join("")
+    : '<div class="placeholder"><b>暂 无 工 单</b><span>可经调度台或对话生成</span></div>';
+}
+
 async function actOnProposal(id, action, btn){
   btn.disabled = true;
   await fetch(`/api/proposals/${id}/${action}`, {method: "POST"});
-  lastProposalsJson = "";        // 状态已变，强制下一次重绘
+  lastProposalsJson = "";
   renderProposals();
-  renderTickets();
 }
 
-/* ---- 导演遥控：演示剧本推进 ---- */
+/* ---- 导演遥控 ---- */
 async function renderScenario(){
   const data = await (await fetch("/api/scenario")).json();
   document.getElementById("actLabel").textContent = data.act.title;
 }
-
 async function scenarioControl(action){
   await fetch(`/api/scenario/${action}`, {method: "POST"});
-  renderScenario();
-  renderKpi();
-  renderCityBars();
+  renderScenario(); renderKpi(); renderCityBars(); renderAlarms();
 }
-
 document.getElementById("actNextBtn").addEventListener("click", () => scenarioControl("next"));
 document.getElementById("actResetBtn").addEventListener("click", () => scenarioControl("reset"));
 
-/* ---- Agent 诊断对话：提问 → 工具轨迹实时出现 → 答案逐字打出 ---- */
+/* ---- 诊断对话（SSE 流式） ---- */
 function appendMessage(kind, text){
   const log = document.getElementById("chatLog");
   const node = document.createElement("div");
@@ -323,7 +449,7 @@ function appendMessage(kind, text){
   return node;
 }
 
-const SESSION_ID = "web-" + Math.random().toString(36).slice(2);   // 每次打开大屏 = 一个新会话
+const SESSION_ID = "web-" + Math.random().toString(36).slice(2);
 
 async function sendDiagnosis(){
   const input = document.getElementById("questionInput"), btn = document.getElementById("sendBtn");
@@ -334,7 +460,6 @@ async function sendDiagnosis(){
   btn.disabled = true; btn.textContent = "诊断中";
   let answerNode = null;
   try {
-    /* SSE 流式：事件一到就渲染 */
     const response = await fetch("/api/agent/stream", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -348,7 +473,7 @@ async function sendDiagnosis(){
       if (done) break;
       buffer += decoder.decode(value, {stream: true});
       let boundary;
-      while ((boundary = buffer.indexOf("\n\n")) >= 0) {        /* SSE 消息以空行分隔 */
+      while ((boundary = buffer.indexOf("\n\n")) >= 0) {
         const line = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2);
         if (!line.startsWith("data: ")) continue;
         const ev = JSON.parse(line.slice(6));
@@ -368,15 +493,15 @@ async function sendDiagnosis(){
   }
   btn.disabled = false; btn.textContent = "诊断";
 }
-
 document.getElementById("sendBtn").addEventListener("click", sendDiagnosis);
 document.getElementById("questionInput").addEventListener("keydown", e => { if (e.key === "Enter") sendDiagnosis(); });
 
+/* ---- 启动 ---- */
 fitStage(); addEventListener("resize", fitStage);
 tickClock(); setInterval(tickClock, 1000);
 renderKpi(); setInterval(renderKpi, 5000);
 renderCityBars(); setInterval(renderCityBars, 5000);
-renderTickets(); setInterval(renderTickets, 5000);
+renderAlarms(); setInterval(renderAlarms, 5000);
 renderProposals(); setInterval(renderProposals, 3000);
 renderScenario(); setInterval(renderScenario, 5000);
 </script>

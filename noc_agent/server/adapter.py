@@ -114,6 +114,12 @@ def reject_proposal_endpoint(proposal_id: int):
     return reject_proposal(proposal_id)
 
 
+@app.get("/api/alarms")
+def alarms():
+    """告警事件流透传：网络事件面板与故障等级分布的数据源"""
+    return requests.get(f"{NOC_URL}/api/alarms", timeout=5).json()
+
+
 @app.get("/api/scenario")
 def scenario_state():
     """演示剧本状态与控制：前端遥控按钮经此代理到数据源（同源免跨域）"""
