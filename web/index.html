@@ -1774,6 +1774,47 @@ const 真数据桥 = {
     });
     return base;
   },
+  "/api/events": async base => {
+    const [pd, td] = await Promise.all([
+      原fetch("/api/proposals").then(r => r.json()),
+      原fetch("/api/tickets").then(r => r.json()),
+    ]);
+    const real = pd.proposals.map(p => {
+      const pending = p.status === "待确认";
+      const t0 = (p.created_at || "").slice(11);
+      const ticket = td.tickets.find(t => t.id === p.ticket_id);
+      return {
+        id: "R" + p.id, proposalId: p.id, pending,
+        title: p.summary.split("；")[0],
+        city: p.city, province: "江苏省",
+        level: p.priority, time: p.created_at,
+        status: p.status === "已否决" ? "已闭环" : "处置中",
+        dispatch: ["wireless", "trans"],
+        info: { ne: (p.summary.match(/传输环[\w-]*/) || ["—"])[0],
+                rootClass: "传输光缆中断（AI定界）", rootProf: "传输", trigProf: "无线",
+                ai: p.diagnosis },
+        tips: { reason: p.diagnosis,
+                progress: pending ? "研判建议单已生成，等待值班员确认派单。"
+                  : (ticket ? `工单 #${ticket.id} 已派发（时限 ${ticket.deadline_hours} 小时），等待现场处置。` : "建议单已否决。"),
+                impact: "批量退服期间该环所辖基站业务中断（演示数据）。",
+                agentReply: "暂无", complaint: "暂无" },
+        related: "本事件由智能调度器自动归并生成：同一传输环退服告警 12 条 + 光路LOS 告警 1 条，压缩为单一事件。",
+        timeline: [
+          { s: "故障发现", t: t0, d: "调度器完成告警归并：" + p.summary, done: 1 },
+          { s: "故障定界", t: t0, d: `规则预筛 ${p.priority}/${p.deadline_hours}h；AI定界完成（依据规范知识库）`, done: 1 },
+          { s: "故障调度", t: t0, d: pending ? "研判建议单待人工确认（审批门）" : "建议单已人工确认", done: pending ? 0 : 1 },
+          { s: "故障处理", t: "", d: ticket ? `处置工单 #${ticket.id} 已派发` : "待派单", done: ticket ? 1 : 0 },
+          { s: "故障闭环", t: "", d: "待现场处置与销障验证", done: 0 },
+          { s: "信息发布", t: "", d: "待闭环后发布", done: 0 },
+        ],
+        agentLogs: [
+          { a: "dispatch", t: t0, d: "事件归并与规则预筛：" + p.summary },
+          { a: "wireless", t: t0, d: p.diagnosis },
+        ],
+      };
+    });
+    return real.concat(base);
+  },
 };
 const apiGet = async path => {
   const base = JSON.parse(JSON.stringify(内置数据[path]));
@@ -2352,7 +2393,7 @@ function renderEvents(){
     <div class="ev" data-i="${i}" style="--c:${LV_HEX[e.level]}" title="单击：联动处置流程与拓扑 · 双击：查看详情">
       <div class="t1"><div class="ttl">${esc(e.title)}</div>
         <span class="disp detail" data-i="${i}">详情</span>
-        <span class="disp" data-i="${i}">调度</span></div>
+        <span class="disp" data-i="${i}">${(e.proposalId && e.pending) ? "确认派单" : "调度"}</span></div>
       <div class="t2"><span class="lv">${e.level}</span><span>${e.province}·${e.city}</span>
         <span>${e.time.slice(5)}</span>
         <span class="ag">→ ${e.dispatch.map(k=>{const a=S.agents[k];return a.mock?`<em>${a.name}</em>`:a.name;}).join("、")}</span></div>
@@ -2367,10 +2408,18 @@ function renderEvents(){
     el.addEventListener("click", e=>{ e.stopPropagation(); openModal(S.events[+el.dataset.i].id); });
   });
   document.querySelectorAll("#evList .disp:not(.detail)").forEach(el=>{
-    el.addEventListener("click", e=>{
+    el.addEventListener("click", async e=>{
       e.stopPropagation();
       const ev=S.events[+el.dataset.i];
       selectEvent(+el.dataset.i);
+      if(ev.proposalId && ev.pending){
+        try{
+          await 原fetch(`/api/proposals/${ev.proposalId}/confirm`, {method:"POST"});
+          toast(`建议单 #${ev.proposalId} 已确认，处置工单已派发`);
+          setTimeout(()=>location.reload(), 900);
+        }catch(err){ toast("确认失败：后端不可用"); }
+        return;
+      }
       toast(`已下发调度指令 → ${ev.dispatch.map(k=>S.agents[k].name).join("、")}${ev.dispatch.some(k=>S.agents[k].mock)?"（含Mock预留接口）":""}`);
     });
   });
