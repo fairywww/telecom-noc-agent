@@ -109,6 +109,28 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 .t-body{font-size:12px;color:var(--txt);line-height:1.5;margin:4px 0}
 .t-meta{font-size:10.5px;color:var(--dim)}
 
+/* ---------- 智能调度台 ---------- */
+.proposal{border:1px solid var(--line);border-left:3px solid var(--crit);border-radius:0;
+  background:rgba(13,42,72,.5);padding:9px 11px;margin-bottom:9px}
+.proposal.done{border-left-color:var(--dim);opacity:.55}
+.pp-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#EAF7FF}
+.pp-pri{font-size:11px;color:var(--crit);border:1px solid rgba(255,77,94,.45);padding:1px 8px}
+.pp-pri.done{color:var(--dim);border-color:var(--line2)}
+.pp-body{font-size:12px;color:var(--txt);line-height:1.55;margin:5px 0;white-space:pre-wrap}
+.pp-diag{font-size:11.5px;color:var(--sub);line-height:1.55;margin:4px 0;border-top:1px dashed var(--line2);padding-top:5px}
+.pp-ops{display:flex;gap:8px;margin-top:6px}
+.pp-ops button{font-size:12px;letter-spacing:1px;padding:4px 14px;cursor:pointer;
+  background:rgba(0,229,255,.12);border:1px solid var(--line);color:var(--cyan)}
+.pp-ops button.reject{background:transparent;color:var(--dim);border-color:var(--line2)}
+.pp-ops button:disabled{opacity:.4;cursor:wait}
+
+/* ---------- 导演遥控（演示控制） ---------- */
+.demo-ctl{display:flex;align-items:center;gap:8px}
+.demo-ctl span{font-size:11px;color:var(--dim);letter-spacing:1px}
+.demo-ctl button{font-size:11px;padding:3px 10px;cursor:pointer;letter-spacing:1px;
+  background:rgba(0,229,255,.08);border:1px solid var(--line2);color:var(--sub)}
+.demo-ctl button:hover{color:var(--cyan);border-color:var(--line)}
+
 /* ---------- 空状态占位 ---------- */
 .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim)}
 .placeholder b{font-size:13px;letter-spacing:3px;font-weight:400}
@@ -121,7 +143,14 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
   <header>
     <div class="h-side l"><div class="h-clock" id="clock">--:--:--</div></div>
     <h1>云网智能运维监控大屏</h1>
-    <div class="h-side r"><div class="h-date" id="dateText">----</div></div>
+    <div class="h-side r">
+      <div class="demo-ctl">
+        <span id="actLabel">--</span>
+        <button id="actNextBtn">下一幕</button>
+        <button id="actResetBtn">重置</button>
+      </div>
+      <div class="h-date" id="dateText">----</div>
+    </div>
   </header>
 
   <main>
@@ -145,12 +174,16 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
 
     <!-- 中栏 -->
     <div class="col c">
-      <section class="panel" style="flex:1">
+      <section class="panel" style="flex:1;min-height:0">
         <div class="p-hd"><i class="tick"></i><b>地市退服分布</b><span class="en">CITY OUTAGE</span></div>
         <div class="p-bd" style="display:flex;flex-direction:column">
           <div class="bars" id="cityBars"></div>
           <div class="legend"><span><i class="g4"></i>4G</span><span><i class="g5"></i>5G</span></div>
         </div>
+      </section>
+      <section class="panel" style="flex:1;min-height:0">
+        <div class="p-hd"><i class="tick"></i><b>智能调度台</b><span class="en">AI DISPATCH CONSOLE</span></div>
+        <div class="p-bd" style="overflow-y:auto"><div id="proposalList"></div></div>
       </section>
     </div>
 
@@ -229,6 +262,56 @@ async function renderTickets(){
     : '<div class="placeholder"><b>暂 无 工 单</b><span>可在右侧要求 Agent 建单</span></div>';
 }
 
+/* ---- 智能调度台：建议单队列，人工确认/否决（审批门） ---- */
+let lastProposalsJson = "";      // 数据未变化不重绘——避免轮询销毁用户正要点击的按钮
+
+async function renderProposals(){
+  const data = await (await fetch("/api/proposals")).json();
+  const snapshot = JSON.stringify(data);
+  if (snapshot === lastProposalsJson) return;
+  lastProposalsJson = snapshot;
+  document.getElementById("proposalList").innerHTML = data.proposals.length
+    ? data.proposals.map(p => {
+        const pending = p.status === "待确认";
+        return `
+        <div class="proposal ${pending ? "" : "done"}">
+          <div class="pp-top"><b>建议单 #${p.id} ${p.city}</b>
+            <span class="pp-pri ${pending ? "" : "done"}">${p.priority} · 限 ${p.deadline_hours}h · ${p.status}</span></div>
+          <div class="pp-body">${p.summary}</div>
+          <div class="pp-diag">${p.diagnosis}</div>
+          ${pending ? `<div class="pp-ops">
+            <button onclick="actOnProposal(${p.id}, 'confirm', this)">确认并派单</button>
+            <button class="reject" onclick="actOnProposal(${p.id}, 'reject', this)">否决</button>
+          </div>` : (p.ticket_id ? `<div class="pp-diag">已转工单 #${p.ticket_id}</div>` : "")}
+        </div>`;
+      }).join("")
+    : '<div class="placeholder"><b>暂 无 待 研 判 事 件</b><span>调度器监听告警中</span></div>';
+}
+
+async function actOnProposal(id, action, btn){
+  btn.disabled = true;
+  await fetch(`/api/proposals/${id}/${action}`, {method: "POST"});
+  lastProposalsJson = "";        // 状态已变，强制下一次重绘
+  renderProposals();
+  renderTickets();
+}
+
+/* ---- 导演遥控：演示剧本推进 ---- */
+async function renderScenario(){
+  const data = await (await fetch("/api/scenario")).json();
+  document.getElementById("actLabel").textContent = data.act.title;
+}
+
+async function scenarioControl(action){
+  await fetch(`/api/scenario/${action}`, {method: "POST"});
+  renderScenario();
+  renderKpi();
+  renderCityBars();
+}
+
+document.getElementById("actNextBtn").addEventListener("click", () => scenarioControl("next"));
+document.getElementById("actResetBtn").addEventListener("click", () => scenarioControl("reset"));
+
 /* ---- Agent 诊断对话：提问 → 工具轨迹实时出现 → 答案逐字打出 ---- */
 function appendMessage(kind, text){
   const log = document.getElementById("chatLog");
@@ -294,6 +377,8 @@ tickClock(); setInterval(tickClock, 1000);
 renderKpi(); setInterval(renderKpi, 5000);
 renderCityBars(); setInterval(renderCityBars, 5000);
 renderTickets(); setInterval(renderTickets, 5000);
+renderProposals(); setInterval(renderProposals, 3000);
+renderScenario(); setInterval(renderScenario, 5000);
 </script>
 </body>
 </html>

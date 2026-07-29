@@ -95,6 +95,41 @@ def list_tickets_endpoint():
     return {"tickets": list_tickets()}
 
 
+@app.get("/api/proposals")
+def list_proposals_endpoint():
+    from ..storage.tickets import list_proposals
+    return {"proposals": list_proposals()}
+
+
+@app.post("/api/proposals/{proposal_id}/confirm")
+def confirm_proposal_endpoint(proposal_id: int):
+    """审批门：人工确认后建议单才转为正式工单"""
+    from ..storage.tickets import confirm_proposal
+    return confirm_proposal(proposal_id)
+
+
+@app.post("/api/proposals/{proposal_id}/reject")
+def reject_proposal_endpoint(proposal_id: int):
+    from ..storage.tickets import reject_proposal
+    return reject_proposal(proposal_id)
+
+
+@app.get("/api/scenario")
+def scenario_state():
+    """演示剧本状态与控制：前端遥控按钮经此代理到数据源（同源免跨域）"""
+    return requests.get(f"{NOC_URL}/api/scenario", timeout=5).json()
+
+
+@app.post("/api/scenario/next")
+def scenario_next():
+    return requests.post(f"{NOC_URL}/api/scenario/next", timeout=5).json()
+
+
+@app.post("/api/scenario/reset")
+def scenario_reset():
+    return requests.post(f"{NOC_URL}/api/scenario/reset", timeout=5).json()
+
+
 class AskRequest(BaseModel):
     question: str
     session_id: str = ""    # 可选会话号；带上即启用多轮对话记忆

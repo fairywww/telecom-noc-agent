@@ -13,10 +13,11 @@
 - **智能诊断**：自然语言提问 → Agent 自主选择工具取数 → 结合规范知识库 → 结论附数据依据与规范出处
 - **全程可解释**：SSE 实时推送工具调用轨迹，答案逐字流式渲染——每个结论都能看到"它查了什么"
 - **多轮记忆**：滚动摘要 + 近期原文两段式会话记忆，token 成本不随对话长度膨胀
+- **智能调度闭环**：告警事件驱动——归并压缩 → 规则预筛 → Agent 定界 → 建议单人工确认 → 派单，附三幕演示剧本引擎
 - **受控写操作**：工单自动生成经三道防线（提示词意图门 / 存储层幂等 / 审计字段），实测不越权、不重复
 - **多 Agent 编排**：总控 + 领域专家子 Agent（Agent as Tool），附单/多 Agent 实测成本对比数据
 - **MCP Server**：手写 JSON-RPC/stdio 协议实现，任何 MCP 客户端可直接发现并调用全部工具
-- **质量内建**：16 项零网络单元测试（CI 自动运行）、4 类场景评测集（成功率 / 轮数 / 时延 / 词元）
+- **质量内建**：24 项零网络单元测试（CI 自动运行）、4 类场景评测集（成功率 / 轮数 / 时延 / 词元）
 - **双实现对照**：同一 Agent 的手写版与 LangGraph 版并存，行为一致，逐概念对照文档
 
 ## 架构
@@ -83,6 +84,7 @@ docker compose up --build
 python3 -m noc_agent.agent.loop "南京退服全网最多，按规范该怎么处置？"       # 单次诊断
 python3 -m noc_agent.agent.memory                                           # 多轮对话
 python3 -m noc_agent.agent.orchestrator "南京情况多严重？按规范怎么处置？"   # 多 Agent 编排
+python3 -m noc_agent.dispatch                                               # 智能调度器（事件驱动）
 ```
 
 ## 项目结构
@@ -97,6 +99,7 @@ telecom-noc-agent/
 │   │   ├── tools.py            #   工具层：4 读 + 1 写，循环与 MCP 共用
 │   │   ├── memory.py           #   多轮会话与滚动摘要记忆
 │   │   └── orchestrator.py     #   总控 + 专家子 Agent 编排
+│   ├── dispatch.py             #   调度器：告警事件 → 研判建议单（独立进程）
 │   ├── rag/retrieval.py        #   RAG：切分 / Embedding / 余弦检索
 │   ├── server/
 │   │   ├── noc_mock.py         #   模拟 NOC 数据源（对接真实系统时整体替换）
@@ -108,14 +111,14 @@ telecom-noc-agent/
 ├── eval.py                     # Agent 评测集
 ├── prompts/                    # 提示词：人设与行为规则
 ├── data/knowledge/             # 运维规范知识库（演示文档，自编通用内容）
-├── notes/                      # 19 篇技术笔记（按六阶段知识地图组织）
-└── tests/                      # 17 项单元测试（零网络依赖）
+├── notes/                      # 17 篇技术笔记（按六阶段知识地图组织）
+└── tests/                      # 24 项单元测试（零网络依赖）
 ```
 
 ## 质量保障
 
 ```bash
-make test    # 17 项单元测试：契约、聚合、切分、幂等、MCP 协议、记忆压缩（3s，零网络）
+make test    # 24 项单元测试：契约、聚合、切分、幂等、MCP 协议、记忆压缩、调度与剧本引擎（3s，零网络）
 make eval    # 评测集：4 类场景的成功率 / 轮数 / 时延 / 词元（需服务运行）
 ```
 
@@ -132,7 +135,7 @@ make eval    # 评测集：4 类场景的成功率 / 轮数 / 时延 / 词元（
 
 ## 技术文档
 
-[notes/](notes/) 收录 19 篇技术笔记，按六阶段知识地图组织（FastAPI 基础 → LLM 接入 → RAG → Agent 核心 → 平台能力 → 行业场景），每篇均锚定本仓库真实代码与实测数据，含设计取舍与自测题。入口：[notes/README.md](notes/README.md)
+[notes/](notes/) 收录 17 篇技术笔记，按六阶段知识地图组织（FastAPI 基础 → LLM 接入 → RAG → Agent 核心 → 平台能力 → 行业场景），每篇均锚定本仓库真实代码与实测数据，含设计取舍与自测题。入口：[notes/README.md](notes/README.md)
 
 ## Roadmap
 

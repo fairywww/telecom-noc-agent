@@ -10,6 +10,9 @@ run-noc:            ## 启动模拟 NOC 数据源（终端 1）
 run-adapter:        ## 启动大屏后端（终端 2）
 	python3 -m uvicorn noc_agent.server.adapter:app --port 8002
 
+run-dispatcher:     ## 启动智能调度器（终端 3，事件驱动研判）
+	python3 -m noc_agent.dispatch
+
 test:               ## 单元测试（零网络依赖，秒级）
 	python3 -m pytest tests/ -v
 
