@@ -336,7 +336,7 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
         <circle cx="20" cy="20" r="3.4" fill="#00E5FF"/></svg>
       <div>
         <h1>云网运营商（演示） · 云网监控 · 黑灯运维 · 基站退服场景</h1>
-        <div class="h-sub">CHINA MOBILE JIANGSU · CLOUD-NETWORK MONITORING · LIGHTS-OUT OPERATION</div>
+        <div class="h-sub">CLOUD-NETWORK OPS DEMO · AI DISPATCH · LIGHTS-OUT OPERATION</div>
       </div>
     </div>
     <div class="h-side r">
@@ -367,20 +367,20 @@ main{flex:1;display:flex;gap:14px;padding:14px 20px 18px;min-height:0;position:r
       </section>
 
       <section class="panel" style="flex:1.35">
-        <div class="p-hd"><i class="tick"></i><b>退服趋势 · AI故障预测</b><span class="en">TREND &amp; PREDICTION</span>
+        <div class="p-hd"><i class="tick"></i><b>退服趋势 · 演示外推</b><span class="en">TREND &amp; PREDICTION</span>
           <div class="ext"><span class="chip" title="GET /api/prediction/trend">预测接口</span></div>
         </div>
         <div class="p-bd">
           <div class="trend-wrap">
             <div class="trend-tags">
-              <span class="ttag">⚡ 突增预警 3 次（5分钟增幅≥30）</span>
-              <span class="ttag g">趋势预测准确率 91.2%</span>
+              <span class="ttag">实时采样 · 每60秒</span>
+              <span class="ttag g">虚线为线性外推（演示）</span>
             </div>
             <svg class="trend-svg" id="trendSvg" viewBox="0 0 428 150" preserveAspectRatio="none"></svg>
             <div class="legend">
               <span><i style="background:var(--cyan)"></i>实际退服数</span>
               <span><i style="background:var(--major);opacity:.9"></i>AI预测</span>
-              <span><i style="background:var(--crit);height:1px;border-top:1px dashed var(--crit);background:none"></i>重大门限 500</span>
+              <span><i style="background:var(--crit);height:1px;border-top:1px dashed var(--crit);background:none"></i>重大门限</span>
             </div>
           </div>
         </div>
